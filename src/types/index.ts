@@ -8,14 +8,61 @@ export interface User {
   updatedAt: Date;
 }
 
+// 笔记本类型
+export interface Notebook {
+  id: string;
+  userId: string;
+  name: string;
+  description?: string | null;
+  color?: string | null;
+  icon?: string | null;
+  sortOrder: number;
+  createdAt: Date;
+  updatedAt: Date;
+  _count?: {
+    notes: number;
+  };
+}
+
+// 标签类型
+export interface Tag {
+  id: string;
+  userId: string;
+  name: string;
+  color?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  _count?: {
+    noteTags: number;
+  };
+}
+
 // 笔记类型
 export interface Note {
   id: string;
   userId: string;
+  notebookId?: string | null;
   title: string;
   content: string;
   createdAt: Date;
   updatedAt: Date;
+  notebook?: Notebook | null;
+  tags?: Tag[];
+}
+
+// 笔记排序选项
+export type NoteSortBy = 'updatedAt' | 'createdAt' | 'title';
+export type NoteSortOrder = 'asc' | 'desc';
+
+// 笔记查询参数
+export interface NoteQueryParams {
+  search?: string;
+  notebookId?: string;
+  tagIds?: string[];
+  sortBy?: NoteSortBy;
+  sortOrder?: NoteSortOrder;
+  page?: number;
+  limit?: number;
 }
 
 // API 响应类型

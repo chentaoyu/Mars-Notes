@@ -19,11 +19,15 @@ export const loginSchema = z.object({
 export const createNoteSchema = z.object({
   title: z.string().min(1, "标题不能为空").max(200, "标题最多 200 字符"),
   content: z.string().max(100000, "内容过长").optional().default(""),
+  notebookId: z.string().optional(),
+  tagIds: z.array(z.string()).optional(),
 });
 
 export const updateNoteSchema = z.object({
   title: z.string().min(1, "标题不能为空").max(200, "标题最多 200 字符").optional(),
   content: z.string().max(100000, "内容过长").optional(),
+  notebookId: z.string().optional().nullable(),
+  tagIds: z.array(z.string()).optional(),
 });
 
 // 用户验证

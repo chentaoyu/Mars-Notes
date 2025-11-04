@@ -22,12 +22,38 @@ export default async function EditorPage(props: EditorPageProps) {
       id: params.id,
       userId: session.user.id,
     },
+    include: {
+      notebook: {
+        select: {
+          id: true,
+          name: true,
+          color: true,
+          icon: true,
+        },
+      },
+      noteTags: {
+        include: {
+          tag: true,
+        },
+      },
+    },
   });
 
   if (!note) {
     redirect("/notes");
   }
 
-  return <MarkdownEditor noteId={note.id} initialTitle={note.title} initialContent={note.content} />;
+  // 转换 noteTags 为 tags
+  const tags = note.noteTags.map((nt) => nt.tag);
+
+  return (
+    <MarkdownEditor
+      noteId={note.id}
+      initialTitle={note.title}
+      initialContent={note.content}
+      initialNotebookId={note.notebookId || undefined}
+      initialTags={tags}
+    />
+  );
 }
 

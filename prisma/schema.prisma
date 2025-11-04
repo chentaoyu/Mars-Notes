@@ -24,9 +24,11 @@ model User {
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
   // 关系
-  notes    Note[]
-  accounts Account[]
-  sessions Session[]
+  notes     Note[]
+  notebooks Notebook[]
+  tags      Tag[]
+  accounts  Account[]
+  sessions  Session[]
 
   @@map("users")
 }
@@ -35,19 +37,23 @@ model User {
 // 笔记表
 // ============================================
 model Note {
-  id        String   @id @default(cuid())
-  userId    String   @map("user_id")
-  title     String   @db.VarChar(200)
-  content   String   @db.Text
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  notebookId String?  @map("notebook_id")
+  title      String   @db.VarChar(200)
+  content    String   @db.Text
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
   // 关系
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notebook Notebook? @relation(fields: [notebookId], references: [id], onDelete: SetNull)
+  noteTags NoteTag[]
 
   // 索引
   @@index([userId])
   @@index([userId, updatedAt(sort: Desc)])
+  @@index([notebookId])
   @@map("notes")
 }
 
@@ -98,5 +104,70 @@ model VerificationToken {
 
   @@unique([identifier, token])
   @@map("verification_tokens")
+}
+
+// ============================================
+// 笔记本表
+// ============================================
+model Notebook {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  name        String   @db.VarChar(100)
+  description String?  @db.VarChar(500)
+  color       String?  @db.VarChar(20)
+  icon        String?  @db.VarChar(50)
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // 关系
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notes Note[]
+
+  // 索引
+  @@index([userId])
+  @@index([userId, sortOrder])
+  @@map("notebooks")
+}
+
+// ============================================
+// 标签表
+// ============================================
+model Tag {
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  name      String    @db.VarChar(50)
+  color     String?   @db.VarChar(20)
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  // 关系
+  user  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notes NoteTag[]
+
+  // 索引
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("tags")
+}
+
+// ============================================
+// 笔记标签关联表（多对多）
+// ============================================
+model NoteTag {
+  id        String   @id @default(cuid())
+  noteId    String   @map("note_id")
+  tagId     String   @map("tag_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // 关系
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  // 索引
+  @@unique([noteId, tagId])
+  @@index([noteId])
+  @@index([tagId])
+  @@map("note_tags")
 }
 

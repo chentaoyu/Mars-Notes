@@ -17,6 +17,21 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
         id: params.id,
         userId: session.user.id, // 确保只能访问自己的笔记
       },
+      include: {
+        notebook: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+            icon: true,
+          },
+        },
+        noteTags: {
+          include: {
+            tag: true,
+          },
+        },
+      },
     });
 
     if (!note) {
@@ -30,7 +45,14 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
       );
     }
 
-    return NextResponse.json(note);
+    // 转换数据格式
+    const formattedNote = {
+      ...note,
+      tags: note.noteTags.map((nt) => nt.tag),
+      noteTags: undefined,
+    };
+
+    return NextResponse.json(formattedNote);
   } catch (error) {
     console.error("获取笔记失败:", error);
     return NextResponse.json(
@@ -76,13 +98,50 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
       );
     }
 
+    const { title, content, notebookId, tagIds } = result.data;
+
     // 更新笔记
     const note = await prisma.note.update({
       where: { id: params.id },
-      data: result.data,
+      data: {
+        ...(title !== undefined && { title }),
+        ...(content !== undefined && { content }),
+        ...(notebookId !== undefined && { notebookId }),
+        // 如果提供了标签 ID 数组，先删除所有标签再重新创建
+        ...(tagIds !== undefined && {
+          noteTags: {
+            deleteMany: {},
+            create: tagIds.map((tagId: string) => ({
+              tagId,
+            })),
+          },
+        }),
+      },
+      include: {
+        notebook: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+            icon: true,
+          },
+        },
+        noteTags: {
+          include: {
+            tag: true,
+          },
+        },
+      },
     });
 
-    return NextResponse.json(note);
+    // 转换数据格式
+    const formattedNote = {
+      ...note,
+      tags: note.noteTags.map((nt) => nt.tag),
+      noteTags: undefined,
+    };
+
+    return NextResponse.json(formattedNote);
   } catch (error) {
     console.error("更新笔记失败:", error);
     return NextResponse.json(

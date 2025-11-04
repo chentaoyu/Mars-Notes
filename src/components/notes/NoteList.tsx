@@ -5,9 +5,10 @@ import { type Note } from "@/types";
 
 interface NoteListProps {
   notes: Note[];
+  onDelete?: (noteId: string) => void;
 }
 
-export function NoteList({ notes }: NoteListProps) {
+export function NoteList({ notes, onDelete }: NoteListProps) {
   if (notes.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -20,7 +21,7 @@ export function NoteList({ notes }: NoteListProps) {
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
       {notes.map((note) => (
-        <NoteCard key={note.id} note={note} />
+        <NoteCard key={note.id} note={note} onDelete={onDelete} />
       ))}
     </div>
   );
