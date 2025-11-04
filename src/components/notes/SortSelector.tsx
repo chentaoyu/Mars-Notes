@@ -30,12 +30,16 @@ export function SortSelector({ sortBy, sortOrder, onSortChange }: SortSelectorPr
   const getSortIcon = () => {
     if (sortBy === "title") {
       return sortOrder === "asc" ? (
-        <ArrowDownAZ className="h-4 w-4" />
+        <ArrowDownAZ className="h-3 w-3 sm:h-4 sm:w-4" />
       ) : (
-        <ArrowUpAZ className="h-4 w-4" />
+        <ArrowUpAZ className="h-3 w-3 sm:h-4 sm:w-4" />
       );
     }
-    return sortOrder === "desc" ? <Clock className="h-4 w-4" /> : <Calendar className="h-4 w-4" />;
+    return sortOrder === "desc" ? (
+      <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+    ) : (
+      <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
+    );
   };
 
   const getSortLabel = () => {
@@ -52,24 +56,24 @@ export function SortSelector({ sortBy, sortOrder, onSortChange }: SortSelectorPr
 
   return (
     <Select value={currentValue} onValueChange={handleValueChange}>
-      <SelectTrigger className="w-[180px]">
-        <div className="flex items-center gap-2">
+      <SelectTrigger className="w-full sm:w-[180px]">
+        <div className="flex items-center gap-1 sm:gap-2">
           {getSortIcon()}
           <SelectValue placeholder="选择排序方式" />
         </div>
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>
-          <SelectLabel>按更新时间</SelectLabel>
-          <SelectItem value="updatedAt-desc">
+          <SelectLabel className="text-xs sm:text-sm">按更新时间</SelectLabel>
+          <SelectItem value="updatedAt-desc" className="text-xs sm:text-sm">
             <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
+              <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
               <span>最近更新</span>
             </div>
           </SelectItem>
-          <SelectItem value="updatedAt-asc">
+          <SelectItem value="updatedAt-asc" className="text-xs sm:text-sm">
             <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 opacity-50" />
+              <Clock className="h-3 w-3 sm:h-4 sm:w-4 opacity-50" />
               <span>最早更新</span>
             </div>
           </SelectItem>
@@ -78,16 +82,16 @@ export function SortSelector({ sortBy, sortOrder, onSortChange }: SortSelectorPr
         <SelectSeparator />
 
         <SelectGroup>
-          <SelectLabel>按创建时间</SelectLabel>
-          <SelectItem value="createdAt-desc">
+          <SelectLabel className="text-xs sm:text-sm">按创建时间</SelectLabel>
+          <SelectItem value="createdAt-desc" className="text-xs sm:text-sm">
             <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
+              <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
               <span>最新创建</span>
             </div>
           </SelectItem>
-          <SelectItem value="createdAt-asc">
+          <SelectItem value="createdAt-asc" className="text-xs sm:text-sm">
             <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 opacity-50" />
+              <Calendar className="h-3 w-3 sm:h-4 sm:w-4 opacity-50" />
               <span>最早创建</span>
             </div>
           </SelectItem>
@@ -96,16 +100,16 @@ export function SortSelector({ sortBy, sortOrder, onSortChange }: SortSelectorPr
         <SelectSeparator />
 
         <SelectGroup>
-          <SelectLabel>按标题</SelectLabel>
-          <SelectItem value="title-asc">
+          <SelectLabel className="text-xs sm:text-sm">按标题</SelectLabel>
+          <SelectItem value="title-asc" className="text-xs sm:text-sm">
             <div className="flex items-center gap-2">
-              <ArrowDownAZ className="h-4 w-4" />
+              <ArrowDownAZ className="h-3 w-3 sm:h-4 sm:w-4" />
               <span>标题 A-Z</span>
             </div>
           </SelectItem>
-          <SelectItem value="title-desc">
+          <SelectItem value="title-desc" className="text-xs sm:text-sm">
             <div className="flex items-center gap-2">
-              <ArrowUpAZ className="h-4 w-4" />
+              <ArrowUpAZ className="h-3 w-3 sm:h-4 sm:w-4" />
               <span>标题 Z-A</span>
             </div>
           </SelectItem>
@@ -114,4 +118,3 @@ export function SortSelector({ sortBy, sortOrder, onSortChange }: SortSelectorPr
     </Select>
   );
 }
-

@@ -40,19 +40,19 @@ export function TagSelector({ selectedTagIds, onChange }: TagSelectorProps) {
   };
 
   if (loading) {
-    return <div className="text-sm text-gray-500">加载标签...</div>;
+    return <div className="text-xs sm:text-sm text-gray-500">加载标签...</div>;
   }
 
   if (tags.length === 0) {
     return (
-      <div className="text-sm text-gray-500">
+      <div className="text-xs sm:text-sm text-gray-500">
         暂无标签，请先在侧边栏创建标签
       </div>
     );
   }
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap gap-1.5 sm:gap-2">
       {tags.map((tag) => {
         const isSelected = selectedTagIds.includes(tag.id);
         return (
@@ -60,7 +60,7 @@ export function TagSelector({ selectedTagIds, onChange }: TagSelectorProps) {
             key={tag.id}
             type="button"
             onClick={() => handleToggleTag(tag.id)}
-            className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${
+            className={`px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-medium transition-all ${
               isSelected
                 ? 'bg-blue-500 text-white'
                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'

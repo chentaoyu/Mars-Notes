@@ -9,6 +9,7 @@ import { NotebookList } from "@/components/notebooks/NotebookList";
 import { TagList } from "@/components/tags/TagList";
 import { Button } from "@/components/ui/button";
 import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
+import { Menu, X } from "lucide-react";
 
 export function NotesPageClient() {
   const router = useRouter();
@@ -100,50 +101,94 @@ export function NotesPageClient() {
   };
 
   return (
-    <div className="flex h-full">
-      {/* 侧边栏 */}
+    <div className="flex h-full relative">
+      {/* 移动端遮罩层 */}
       {showSidebar && (
-        <div className="w-64 border-r bg-gray-50 dark:bg-gray-900 flex flex-col h-full">
-          <div className="flex-1 overflow-y-auto p-4">
-            <div className="space-y-6">
-              <NotebookList
-                selectedNotebookId={selectedNotebookId}
-                onSelectNotebook={setSelectedNotebookId}
-              />
-              <TagList selectedTagIds={selectedTagIds} onSelectTags={setSelectedTagIds} />
-            </div>
-          </div>
-        </div>
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setShowSidebar(false)}
+        />
       )}
 
+      {/* 侧边栏 */}
+      <div
+        className={`
+          fixed lg:relative inset-y-0 left-0 z-50
+          w-64 border-r bg-gray-50 dark:bg-gray-900 
+          flex flex-col h-full
+          transform transition-all duration-300 ease-in-out
+          ${showSidebar ? "translate-x-0" : "-translate-x-full"}
+          ${showSidebar ? "lg:w-64" : "lg:w-0 lg:border-0 lg:overflow-hidden"}
+          ${!showSidebar ? "lg:pointer-events-none" : ""}
+        `}
+      >
+        {/* 移动端关闭按钮 */}
+        <div className="lg:hidden flex justify-end p-4 pb-0">
+          <button
+            onClick={() => setShowSidebar(false)}
+            className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+          >
+            <X className="h-6 w-6" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4">
+          <div className="space-y-6">
+            <NotebookList
+              selectedNotebookId={selectedNotebookId}
+              onSelectNotebook={(id) => {
+                setSelectedNotebookId(id);
+                // 移动端选择后自动关闭侧边栏
+                if (window.innerWidth < 1024) {
+                  setShowSidebar(false);
+                }
+              }}
+            />
+            <TagList
+              selectedTagIds={selectedTagIds}
+              onSelectTags={(ids) => {
+                setSelectedTagIds(ids);
+                // 移动端选择后自动关闭侧边栏
+                if (window.innerWidth < 1024) {
+                  setShowSidebar(false);
+                }
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
       {/* 主内容区 */}
-      <div className="flex-1 overflow-y-auto h-full">
-        <div className="max-w-6xl mx-auto p-6">
+      <div className="flex-1 overflow-y-auto h-full w-full">
+        <div className="max-w-6xl mx-auto p-4 sm:p-6">
           {/* 顶部工具栏 */}
           <div className="mb-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
                 <button
                   onClick={() => setShowSidebar(!showSidebar)}
-                  className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+                  className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 flex items-center gap-1 sm:gap-2"
                 >
-                  {showSidebar ? "◀ 隐藏" : "▶ 显示"}
+                  <Menu className="h-5 w-5" />
+                  <span className="text-sm sm:text-base">菜单</span>
                 </button>
-                <h2 className="text-3xl font-bold tracking-tight">
+                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
                   {selectedNotebookId ? "笔记本" : "我的笔记"}
                 </h2>
               </div>
-              <Button onClick={handleCreateNote}>新建笔记</Button>
+              <Button onClick={handleCreateNote} className="w-full sm:w-auto">
+                新建笔记
+              </Button>
             </div>
 
             {/* 搜索和排序 */}
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="搜索笔记..."
-                className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
+                className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700 text-sm sm:text-base"
               />
               <SortSelector
                 sortBy={sortBy}
@@ -157,12 +202,12 @@ export function NotesPageClient() {
 
             {/* 活动筛选标签 */}
             {(selectedNotebookId || selectedTagIds.length > 0) && (
-              <div className="flex items-center gap-2 text-sm">
+              <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
                 <span className="text-gray-600 dark:text-gray-400">筛选条件：</span>
                 {selectedNotebookId && (
                   <button
                     onClick={() => setSelectedNotebookId(null)}
-                    className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 dark:bg-blue-900/20 dark:text-blue-300"
+                    className="px-2 sm:px-3 py-1 bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 dark:bg-blue-900/20 dark:text-blue-300 whitespace-nowrap"
                   >
                     笔记本 ×
                   </button>
@@ -170,7 +215,7 @@ export function NotesPageClient() {
                 {selectedTagIds.length > 0 && (
                   <button
                     onClick={() => setSelectedTagIds([])}
-                    className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 dark:bg-blue-900/20 dark:text-blue-300"
+                    className="px-2 sm:px-3 py-1 bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 dark:bg-blue-900/20 dark:text-blue-300 whitespace-nowrap"
                   >
                     {selectedTagIds.length} 个标签 ×
                   </button>
@@ -178,7 +223,7 @@ export function NotesPageClient() {
               </div>
             )}
 
-            <p className="text-muted-foreground">共 {notes.length} 篇笔记</p>
+            <p className="text-muted-foreground text-xs sm:text-sm">共 {notes.length} 篇笔记</p>
           </div>
 
           {/* 笔记列表 */}

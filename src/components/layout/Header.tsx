@@ -36,24 +36,29 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between">
+      <div className="container flex h-14 sm:h-16 items-center justify-between px-4">
         <Link href="/notes" className="flex items-center space-x-2">
-          <h1 className="text-2xl font-bold">Mars-Notes</h1>
+          <h1 className="text-lg sm:text-2xl font-bold">Mars-Notes</h1>
         </Link>
 
-        <div className="flex items-center gap-2">
-          <Button onClick={handleNewNote} size="sm">
-            <PlusCircle className="h-4 w-4 mr-2" />
-            新建笔记
+        <div className="flex items-center gap-1 sm:gap-2">
+          <Button onClick={handleNewNote} size="sm" className="text-xs sm:text-sm">
+            <PlusCircle className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+            <span className="hidden sm:inline">新建笔记</span>
           </Button>
 
-          <div className="flex items-center gap-2 ml-4 pl-4 border-l">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 ml-2 sm:ml-4 pl-2 sm:pl-4 border-l">
+            <div className="hidden md:flex items-center gap-2">
               <User className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm text-muted-foreground">{session?.user?.name || "用户"}</span>
             </div>
-            <Button variant="ghost" size="sm" onClick={handleLogout}>
-              <LogOut className="h-4 w-4" />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              className="h-8 w-8 sm:h-9 sm:w-9 p-0"
+            >
+              <LogOut className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
           </div>
         </div>
@@ -61,4 +66,3 @@ export function Header() {
     </header>
   );
 }
-

@@ -11,7 +11,7 @@ interface MarkdownPreviewProps {
 
 export function MarkdownPreview({ content }: MarkdownPreviewProps) {
   return (
-    <div className="markdown-body prose prose-slate max-w-none p-6 dark:prose-invert">
+    <div className="markdown-body prose prose-slate prose-sm sm:prose-base max-w-none p-3 sm:p-6 dark:prose-invert">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{

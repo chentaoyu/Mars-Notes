@@ -119,11 +119,11 @@ export function TagList({ selectedTagIds = [], onSelectTags }: TagListProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">标签</h3>
+        <h3 className="text-base sm:text-lg font-semibold">标签</h3>
         <Button
           size="sm"
           onClick={() => setShowCreateForm(!showCreateForm)}
-          className="text-xs"
+          className="text-xs h-7 sm:h-8"
         >
           {showCreateForm ? '取消' : '新建'}
         </Button>
@@ -139,13 +139,13 @@ export function TagList({ selectedTagIds = [], onSelectTags }: TagListProps) {
       {selectedTagIds.length > 0 && (
         <button
           onClick={() => onSelectTags([])}
-          className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+          className="text-[10px] sm:text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
         >
           清除筛选
         </button>
       )}
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5 sm:gap-2">
         {tags.map((tag) => {
           const isSelected = selectedTagIds.includes(tag.id);
           return (
@@ -155,7 +155,7 @@ export function TagList({ selectedTagIds = [], onSelectTags }: TagListProps) {
             >
               <button
                 onClick={() => handleToggleTag(tag.id)}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${
+                className={`px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-medium transition-all ${
                   isSelected
                     ? 'bg-blue-500 text-white'
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
@@ -168,7 +168,7 @@ export function TagList({ selectedTagIds = [], onSelectTags }: TagListProps) {
               >
                 # {tag.name}
                 {tag._count && tag._count.noteTags > 0 && (
-                  <span className="ml-1 text-xs opacity-75">
+                  <span className="ml-1 text-[10px] sm:text-xs opacity-75">
                     ({tag._count.noteTags})
                   </span>
                 )}
@@ -178,7 +178,7 @@ export function TagList({ selectedTagIds = [], onSelectTags }: TagListProps) {
                   e.stopPropagation();
                   handleDeleteTag(tag.id);
                 }}
-                className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs transition-opacity"
+                className="absolute -top-1 -right-1 sm:opacity-0 sm:group-hover:opacity-100 bg-red-500 text-white rounded-full w-3.5 h-3.5 sm:w-4 sm:h-4 flex items-center justify-center text-[10px] sm:text-xs transition-opacity"
                 title="删除标签"
               >
                 ×
@@ -188,7 +188,7 @@ export function TagList({ selectedTagIds = [], onSelectTags }: TagListProps) {
         })}
 
         {tags.length === 0 && (
-          <p className="text-gray-500 text-sm">暂无标签，点击"新建"创建第一个标签</p>
+          <p className="text-gray-500 text-xs sm:text-sm">暂无标签，点击"新建"创建第一个标签</p>
         )}
       </div>
 
@@ -222,20 +222,20 @@ function CreateTagForm({ onSubmit, onCancel }: CreateTagFormProps) {
   };
 
   return (
-    <Card className="p-3">
+    <Card className="p-2.5 sm:p-3">
       <form onSubmit={handleSubmit} className="space-y-2">
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="标签名称"
-          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+          className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm dark:bg-gray-800 dark:border-gray-700"
           autoFocus
           maxLength={50}
           required
         />
         <div className="flex gap-2">
-          <Button type="submit" size="sm" className="flex-1 text-xs">
+          <Button type="submit" size="sm" className="flex-1 text-xs h-7 sm:h-8">
             创建
           </Button>
           <Button
@@ -243,7 +243,7 @@ function CreateTagForm({ onSubmit, onCancel }: CreateTagFormProps) {
             size="sm"
             variant="outline"
             onClick={onCancel}
-            className="text-xs"
+            className="text-xs h-7 sm:h-8"
           >
             取消
           </Button>

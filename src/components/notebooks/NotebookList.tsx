@@ -100,11 +100,11 @@ export function NotebookList({ selectedNotebookId, onSelectNotebook }: NotebookL
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">笔记本</h3>
+        <h3 className="text-base sm:text-lg font-semibold">笔记本</h3>
         <Button
           size="sm"
           onClick={() => setShowCreateForm(!showCreateForm)}
-          className="text-xs"
+          className="text-xs h-7 sm:h-8"
         >
           {showCreateForm ? '取消' : '新建'}
         </Button>
@@ -120,7 +120,7 @@ export function NotebookList({ selectedNotebookId, onSelectNotebook }: NotebookL
       <div className="space-y-2">
         <button
           onClick={() => onSelectNotebook(null)}
-          className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
+          className={`w-full text-left px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm sm:text-base ${
             !selectedNotebookId
               ? 'bg-blue-100 text-blue-900 dark:bg-blue-900/20 dark:text-blue-300'
               : 'hover:bg-gray-100 dark:hover:bg-gray-800'
@@ -134,26 +134,26 @@ export function NotebookList({ selectedNotebookId, onSelectNotebook }: NotebookL
         {notebooks.map((notebook) => (
           <div
             key={notebook.id}
-            className={`group relative px-4 py-2 rounded-lg transition-colors cursor-pointer ${
+            className={`group relative px-3 sm:px-4 py-2 rounded-lg transition-colors cursor-pointer ${
               selectedNotebookId === notebook.id
                 ? 'bg-blue-100 text-blue-900 dark:bg-blue-900/20 dark:text-blue-300'
                 : 'hover:bg-gray-100 dark:hover:bg-gray-800'
             }`}
             onClick={() => onSelectNotebook(notebook.id)}
           >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span>{notebook.icon || '📓'}</span>
-                  <span className="font-medium truncate">{notebook.name}</span>
+                <div className="flex items-center gap-1 sm:gap-2">
+                  <span className="text-sm sm:text-base">{notebook.icon || '📓'}</span>
+                  <span className="font-medium truncate text-sm sm:text-base">{notebook.name}</span>
                   {notebook._count && (
-                    <span className="text-xs text-gray-500">
+                    <span className="text-[10px] sm:text-xs text-gray-500 shrink-0">
                       ({notebook._count.notes})
                     </span>
                   )}
                 </div>
                 {notebook.description && (
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 truncate">
+                  <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 mt-1 truncate">
                     {notebook.description}
                   </p>
                 )}
@@ -163,7 +163,7 @@ export function NotebookList({ selectedNotebookId, onSelectNotebook }: NotebookL
                   e.stopPropagation();
                   handleDeleteNotebook(notebook.id);
                 }}
-                className="opacity-0 group-hover:opacity-100 ml-2 text-red-500 hover:text-red-700 text-xs transition-opacity"
+                className="sm:opacity-0 sm:group-hover:opacity-100 ml-1 sm:ml-2 text-red-500 hover:text-red-700 text-[10px] sm:text-xs transition-opacity shrink-0"
               >
                 删除
               </button>
@@ -204,15 +204,15 @@ function CreateNotebookForm({ onSubmit, onCancel }: CreateNotebookFormProps) {
   };
 
   return (
-    <Card className="p-4">
-      <form onSubmit={handleSubmit} className="space-y-3">
+    <Card className="p-3 sm:p-4">
+      <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-3">
         <div>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="笔记本名称"
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
             autoFocus
             maxLength={100}
             required
@@ -224,15 +224,15 @@ function CreateNotebookForm({ onSubmit, onCancel }: CreateNotebookFormProps) {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="描述（可选）"
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
             maxLength={500}
           />
         </div>
         <div className="flex gap-2">
-          <Button type="submit" size="sm" className="flex-1">
+          <Button type="submit" size="sm" className="flex-1 text-xs sm:text-sm h-8 sm:h-9">
             创建
           </Button>
-          <Button type="button" size="sm" variant="outline" onClick={onCancel}>
+          <Button type="button" size="sm" variant="outline" onClick={onCancel} className="text-xs sm:text-sm h-8 sm:h-9">
             取消
           </Button>
         </div>

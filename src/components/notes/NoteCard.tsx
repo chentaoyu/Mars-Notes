@@ -25,52 +25,52 @@ export function NoteCard({ note, onDelete }: NoteCardProps) {
 
   return (
     <Link href={`/editor/${note.id}`} className="block h-full">
-      <Card className="note-card cursor-pointer group relative h-[280px] flex flex-col">
-        <CardHeader className="flex-shrink-0 pb-3">
+      <Card className="note-card cursor-pointer group relative h-[240px] sm:h-[280px] flex flex-col">
+        <CardHeader className="flex-shrink-0 pb-2 sm:pb-3">
           <div className="flex items-start justify-between gap-2">
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <FileText className="h-5 w-5 text-muted-foreground shrink-0" />
-              <CardTitle className="text-lg truncate">{note.title}</CardTitle>
+            <div className="flex items-center gap-1 sm:gap-2 flex-1 min-w-0">
+              <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground shrink-0" />
+              <CardTitle className="text-base sm:text-lg truncate">{note.title}</CardTitle>
             </div>
             {onDelete && (
               <button
                 onClick={handleDelete}
-                className="opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-700 p-1"
+                className="sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-700 p-1"
                 title="删除笔记"
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
               </button>
             )}
           </div>
-          <CardDescription className="line-clamp-2 min-h-[2.5rem]">
+          <CardDescription className="line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem] text-xs sm:text-sm">
             {excerpt || "无内容"}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex-1 flex flex-col justify-between space-y-2 min-h-0 pt-0">
-          <div className="space-y-2 flex-shrink-0">
+          <div className="space-y-1 sm:space-y-2 flex-shrink-0">
             {/* 笔记本标签 */}
             {note.notebook && (
-              <div className="flex items-center gap-1 text-xs">
-                <span className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-md truncate">
-                  {note.notebook.icon || '📓'} {note.notebook.name}
+              <div className="flex items-center gap-1 text-[10px] sm:text-xs">
+                <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-gray-100 dark:bg-gray-800 rounded-md truncate">
+                  {note.notebook.icon || "📓"} {note.notebook.name}
                 </span>
               </div>
             )}
 
             {/* 标签列表 */}
             {note.tags && note.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1 max-h-[56px] overflow-hidden">
+              <div className="flex flex-wrap gap-1 max-h-[40px] sm:max-h-[56px] overflow-hidden">
                 {note.tags.slice(0, 3).map((tag) => (
                   <span
                     key={tag.id}
-                    className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 truncate max-w-[120px]"
+                    className="px-1.5 sm:px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 truncate max-w-[80px] sm:max-w-[120px]"
                     style={tag.color ? { backgroundColor: `${tag.color}20`, color: tag.color } : {}}
                   >
                     #{tag.name}
                   </span>
                 ))}
                 {note.tags.length > 3 && (
-                  <span className="px-2 py-1 text-xs text-gray-500">
+                  <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs text-gray-500">
                     +{note.tags.length - 3}
                   </span>
                 )}
@@ -78,7 +78,7 @@ export function NoteCard({ note, onDelete }: NoteCardProps) {
             )}
           </div>
 
-          <p className="text-xs text-muted-foreground flex-shrink-0">
+          <p className="text-[10px] sm:text-xs text-muted-foreground flex-shrink-0">
             更新于 {formatRelativeTime(note.updatedAt)}
           </p>
         </CardContent>
@@ -86,4 +86,3 @@ export function NoteCard({ note, onDelete }: NoteCardProps) {
     </Link>
   );
 }
-
