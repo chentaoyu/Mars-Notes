@@ -103,19 +103,21 @@ export function NotesPageClient() {
     <div className="flex h-full">
       {/* 侧边栏 */}
       {showSidebar && (
-        <div className="w-64 border-r bg-gray-50 dark:bg-gray-900 p-4 overflow-y-auto">
-          <div className="space-y-6">
-            <NotebookList
-              selectedNotebookId={selectedNotebookId}
-              onSelectNotebook={setSelectedNotebookId}
-            />
-            <TagList selectedTagIds={selectedTagIds} onSelectTags={setSelectedTagIds} />
+        <div className="w-64 border-r bg-gray-50 dark:bg-gray-900 flex flex-col h-full">
+          <div className="flex-1 overflow-y-auto p-4">
+            <div className="space-y-6">
+              <NotebookList
+                selectedNotebookId={selectedNotebookId}
+                onSelectNotebook={setSelectedNotebookId}
+              />
+              <TagList selectedTagIds={selectedTagIds} onSelectTags={setSelectedTagIds} />
+            </div>
           </div>
         </div>
       )}
 
       {/* 主内容区 */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto h-full">
         <div className="max-w-6xl mx-auto p-6">
           {/* 顶部工具栏 */}
           <div className="mb-6 space-y-4">
