@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Note, NoteSortBy, NoteSortOrder } from "@/types";
 import { NoteList } from "@/components/notes/NoteList";
+import { SortSelector } from "@/components/notes/SortSelector";
 import { NotebookList } from "@/components/notebooks/NotebookList";
 import { TagList } from "@/components/tags/TagList";
 import { Button } from "@/components/ui/button";
@@ -140,27 +141,16 @@ export function NotesPageClient() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="搜索笔记..."
-                className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
               />
-              <select
-                value={`${sortBy}-${sortOrder}`}
-                onChange={(e) => {
-                  const [newSortBy, newSortOrder] = e.target.value.split("-") as [
-                    NoteSortBy,
-                    NoteSortOrder,
-                  ];
+              <SortSelector
+                sortBy={sortBy}
+                sortOrder={sortOrder}
+                onSortChange={(newSortBy, newSortOrder) => {
                   setSortBy(newSortBy);
                   setSortOrder(newSortOrder);
                 }}
-                className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="updatedAt-desc">最近更新</option>
-                <option value="updatedAt-asc">最早更新</option>
-                <option value="createdAt-desc">最新创建</option>
-                <option value="createdAt-asc">最早创建</option>
-                <option value="title-asc">标题 A-Z</option>
-                <option value="title-desc">标题 Z-A</option>
-              </select>
+              />
             </div>
 
             {/* 活动筛选标签 */}
