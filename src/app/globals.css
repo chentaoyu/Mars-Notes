@@ -4,48 +4,96 @@
 
 @layer base {
   :root {
+    /* 背景色 - 纯白色 */
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 270 15% 15%;
+    
+    /* 卡片 - 白色带轻微紫色调 */
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 270 15% 15%;
+    
+    /* 弹出层 */
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
+    --popover-foreground: 270 15% 15%;
+    
+    /* 主色 - 紫葡萄色 */
+    --primary: 280 60% 55%;
+    --primary-foreground: 0 0% 100%;
+    
+    /* 次要色 - 浅紫色 */
+    --secondary: 270 40% 96%;
+    --secondary-foreground: 280 65% 30%;
+    
+    /* 柔和色 - 很浅的紫色 */
+    --muted: 270 30% 96%;
+    --muted-foreground: 270 20% 45%;
+    
+    /* 强调色 - 中等紫色 */
+    --accent: 275 50% 92%;
+    --accent-foreground: 280 65% 35%;
+    
+    /* 破坏性操作色 - 保持红色 */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    /* 边框和输入 - 浅紫灰色 */
+    --border: 270 20% 88%;
+    --input: 270 20% 88%;
+    
+    /* 焦点环 - 主色 */
+    --ring: 280 60% 55%;
+    
+    /* 圆角 */
     --radius: 0.5rem;
+    
+    /* 自定义 - 渐变色 */
+    --gradient-from: 280 70% 60%;
+    --gradient-to: 290 65% 50%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    /* 背景色 - 深紫黑色 */
+    --background: 270 25% 8%;
+    --foreground: 270 10% 95%;
+    
+    /* 卡片 - 深紫色 */
+    --card: 270 22% 12%;
+    --card-foreground: 270 10% 95%;
+    
+    /* 弹出层 */
+    --popover: 270 25% 10%;
+    --popover-foreground: 270 10% 95%;
+    
+    /* 主色 - 亮紫色 */
+    --primary: 280 65% 65%;
+    --primary-foreground: 270 25% 8%;
+    
+    /* 次要色 - 深紫色 */
+    --secondary: 270 25% 18%;
+    --secondary-foreground: 270 10% 95%;
+    
+    /* 柔和色 */
+    --muted: 270 20% 20%;
+    --muted-foreground: 270 10% 65%;
+    
+    /* 强调色 */
+    --accent: 275 30% 22%;
+    --accent-foreground: 270 10% 95%;
+    
+    /* 破坏性操作色 */
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 270 10% 95%;
+    
+    /* 边框和输入 */
+    --border: 270 20% 25%;
+    --input: 270 20% 25%;
+    
+    /* 焦点环 */
+    --ring: 280 65% 60%;
+    
+    /* 自定义 - 渐变色 */
+    --gradient-from: 280 70% 55%;
+    --gradient-to: 290 65% 45%;
   }
 }
 
@@ -109,5 +157,107 @@ pre[class*="language-"] {
 
 code[class*="language-"] {
   @apply text-sm;
+}
+
+/* 紫葡萄色主题增强样式 */
+.grape-gradient {
+  @apply bg-gradient-purple;
+}
+
+.grape-glow {
+  box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+}
+
+.grape-border {
+  @apply border-primary/20;
+}
+
+/* 卡片悬停效果 - 紫色主题 */
+.card-hover-grape {
+  @apply transition-all duration-300;
+  @apply hover:shadow-lg hover:shadow-primary/10;
+  @apply hover:border-primary/30;
+  @apply hover:-translate-y-1;
+}
+
+/* 按钮脉冲动画 */
+.pulse-grape {
+  animation: pulse-grape 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse-grape {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .7;
+  }
+}
+
+/* 渐变文字效果 */
+.text-gradient-grape {
+  @apply bg-gradient-purple bg-clip-text text-transparent;
+}
+
+/* 紫色选中状态 */
+::selection {
+  background-color: hsl(var(--primary) / 0.3);
+  color: hsl(var(--foreground));
+}
+
+/* 焦点状态增强 */
+.focus-grape:focus-visible {
+  @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
+}
+
+/* 侧边栏装饰 */
+.sidebar-accent {
+  @apply border-l-4 border-l-primary/20;
+  @apply hover:border-l-primary/60;
+  @apply transition-colors duration-200;
+}
+
+/* 加载动画 - 紫色主题 */
+.spinner-grape {
+  border: 3px solid hsl(var(--muted));
+  border-top: 3px solid hsl(var(--primary));
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 页面标题装饰 */
+.page-title-grape {
+  @apply relative;
+}
+
+.page-title-grape::after {
+  content: '';
+  @apply absolute -bottom-2 left-0 h-1 w-16 bg-gradient-purple rounded-full;
+}
+
+/* 标签样式增强 */
+.tag-grape {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  @apply bg-primary/10 text-primary;
+  @apply border border-primary/20;
+  @apply hover:bg-primary/20 transition-colors;
+}
+
+/* 通知点样式 */
+.notification-dot {
+  @apply relative;
+}
+
+.notification-dot::after {
+  content: '';
+  @apply absolute -top-1 -right-1 h-2 w-2 bg-primary rounded-full;
+  animation: pulse-grape 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 

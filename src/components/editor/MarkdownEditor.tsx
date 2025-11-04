@@ -7,6 +7,7 @@ import { MarkdownPreview } from "./MarkdownPreview";
 import { AutoSaveIndicator } from "./AutoSaveIndicator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
 import { ArrowLeft, Trash2, Book, Tag as TagIcon } from "lucide-react";
 import Link from "next/link";
 import { Tag, Notebook } from "@/types";
@@ -38,6 +39,7 @@ export function MarkdownEditor({
   const [isDeleting, setIsDeleting] = useState(false);
   const [showNotebookSelect, setShowNotebookSelect] = useState(false);
   const [showTagSelect, setShowTagSelect] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   // 防抖，2 秒后自动保存
   const debouncedContent = useDebounce(content, 2000);
@@ -119,11 +121,11 @@ export function MarkdownEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [notebookId, tagIds]);
 
-  const handleDelete = async () => {
-    if (!confirm("确定要删除这篇笔记吗？此操作不可撤销。")) {
-      return;
-    }
+  const handleDelete = () => {
+    setDeleteDialogOpen(true);
+  };
 
+  const confirmDelete = async () => {
     setIsDeleting(true);
     try {
       await fetch(`/api/notes/${noteId}`, {
@@ -134,6 +136,7 @@ export function MarkdownEditor({
     } catch (error) {
       console.error("删除失败:", error);
       setIsDeleting(false);
+      setDeleteDialogOpen(false);
     }
   };
 
@@ -263,6 +266,14 @@ export function MarkdownEditor({
           <MarkdownPreview content={content} />
         </div>
       </div>
+
+      {/* 删除确认对话框 */}
+      <DeleteConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={confirmDelete}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }

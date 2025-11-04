@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Notebook } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { DeleteConfirmDialog } from '@/components/common/DeleteConfirmDialog';
 
 interface NotebookListProps {
   selectedNotebookId?: string | null;
@@ -14,6 +15,9 @@ export function NotebookList({ selectedNotebookId, onSelectNotebook }: NotebookL
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [notebookToDelete, setNotebookToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchNotebooks();
@@ -56,21 +60,27 @@ export function NotebookList({ selectedNotebookId, onSelectNotebook }: NotebookL
     }
   };
 
-  const handleDeleteNotebook = async (notebookId: string) => {
-    if (!confirm('确定要删除这个笔记本吗？笔记本中的笔记将不会被删除。')) {
-      return;
-    }
+  const handleDeleteNotebook = (notebookId: string) => {
+    setNotebookToDelete(notebookId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!notebookToDelete) return;
 
     try {
-      const response = await fetch(`/api/notebooks/${notebookId}`, {
+      setIsDeleting(true);
+      const response = await fetch(`/api/notebooks/${notebookToDelete}`, {
         method: 'DELETE',
       });
 
       if (response.ok) {
-        setNotebooks(notebooks.filter((nb) => nb.id !== notebookId));
-        if (selectedNotebookId === notebookId) {
+        setNotebooks(notebooks.filter((nb) => nb.id !== notebookToDelete));
+        if (selectedNotebookId === notebookToDelete) {
           onSelectNotebook(null);
         }
+        setDeleteDialogOpen(false);
+        setNotebookToDelete(null);
       } else {
         const error = await response.json();
         alert(error.error || '删除笔记本失败');
@@ -78,6 +88,8 @@ export function NotebookList({ selectedNotebookId, onSelectNotebook }: NotebookL
     } catch (error) {
       console.error('删除笔记本失败:', error);
       alert('删除笔记本失败');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -159,6 +171,16 @@ export function NotebookList({ selectedNotebookId, onSelectNotebook }: NotebookL
           </div>
         ))}
       </div>
+
+      {/* 删除确认对话框 */}
+      <DeleteConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={confirmDelete}
+        isDeleting={isDeleting}
+        title="确认删除笔记本"
+        description="确定要删除这个笔记本吗？笔记本中还有笔记时将无法删除。"
+      />
     </div>
   );
 }

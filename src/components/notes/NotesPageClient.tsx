@@ -1,23 +1,27 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { Note, NoteSortBy, NoteSortOrder } from '@/types';
-import { NoteList } from '@/components/notes/NoteList';
-import { NotebookList } from '@/components/notebooks/NotebookList';
-import { TagList } from '@/components/tags/TagList';
-import { Button } from '@/components/ui/button';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Note, NoteSortBy, NoteSortOrder } from "@/types";
+import { NoteList } from "@/components/notes/NoteList";
+import { NotebookList } from "@/components/notebooks/NotebookList";
+import { TagList } from "@/components/tags/TagList";
+import { Button } from "@/components/ui/button";
+import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
 
 export function NotesPageClient() {
   const router = useRouter();
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [selectedNotebookId, setSelectedNotebookId] = useState<string | null>(null);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState<NoteSortBy>('updatedAt');
-  const [sortOrder, setSortOrder] = useState<NoteSortOrder>('desc');
+  const [sortBy, setSortBy] = useState<NoteSortBy>("updatedAt");
+  const [sortOrder, setSortOrder] = useState<NoteSortOrder>("desc");
   const [showSidebar, setShowSidebar] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchNotes();
@@ -27,21 +31,21 @@ export function NotesPageClient() {
     try {
       setLoading(true);
       const params = new URLSearchParams();
-      
-      if (search) params.set('search', search);
-      if (selectedNotebookId) params.set('notebookId', selectedNotebookId);
-      if (selectedTagIds.length > 0) params.set('tagIds', selectedTagIds.join(','));
-      params.set('sort', sortBy);
-      params.set('order', sortOrder);
+
+      if (search) params.set("search", search);
+      if (selectedNotebookId) params.set("notebookId", selectedNotebookId);
+      if (selectedTagIds.length > 0) params.set("tagIds", selectedTagIds.join(","));
+      params.set("sort", sortBy);
+      params.set("order", sortOrder);
 
       const response = await fetch(`/api/notes?${params}`);
       const result = await response.json();
-      
+
       if (response.ok) {
         setNotes(result.data || []);
       }
     } catch (error) {
-      console.error('获取笔记列表失败:', error);
+      console.error("获取笔记列表失败:", error);
     } finally {
       setLoading(false);
     }
@@ -49,12 +53,12 @@ export function NotesPageClient() {
 
   const handleCreateNote = async () => {
     try {
-      const response = await fetch('/api/notes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: '未命名笔记',
-          content: '',
+          title: "未命名笔记",
+          content: "",
           notebookId: selectedNotebookId,
         }),
       });
@@ -64,25 +68,33 @@ export function NotesPageClient() {
         router.push(`/editor/${note.id}`);
       }
     } catch (error) {
-      console.error('创建笔记失败:', error);
+      console.error("创建笔记失败:", error);
     }
   };
 
-  const handleDeleteNote = async (noteId: string) => {
-    if (!confirm('确定要删除这篇笔记吗？')) {
-      return;
-    }
+  const handleDeleteNote = (noteId: string) => {
+    setNoteToDelete(noteId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!noteToDelete) return;
 
     try {
-      const response = await fetch(`/api/notes/${noteId}`, {
-        method: 'DELETE',
+      setIsDeleting(true);
+      const response = await fetch(`/api/notes/${noteToDelete}`, {
+        method: "DELETE",
       });
 
       if (response.ok) {
-        setNotes(notes.filter((note) => note.id !== noteId));
+        setNotes(notes.filter((note) => note.id !== noteToDelete));
+        setDeleteDialogOpen(false);
+        setNoteToDelete(null);
       }
     } catch (error) {
-      console.error('删除笔记失败:', error);
+      console.error("删除笔记失败:", error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -96,10 +108,7 @@ export function NotesPageClient() {
               selectedNotebookId={selectedNotebookId}
               onSelectNotebook={setSelectedNotebookId}
             />
-            <TagList
-              selectedTagIds={selectedTagIds}
-              onSelectTags={setSelectedTagIds}
-            />
+            <TagList selectedTagIds={selectedTagIds} onSelectTags={setSelectedTagIds} />
           </div>
         </div>
       )}
@@ -115,10 +124,10 @@ export function NotesPageClient() {
                   onClick={() => setShowSidebar(!showSidebar)}
                   className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
                 >
-                  {showSidebar ? '◀ 隐藏' : '▶ 显示'}
+                  {showSidebar ? "◀ 隐藏" : "▶ 显示"}
                 </button>
                 <h2 className="text-3xl font-bold tracking-tight">
-                  {selectedNotebookId ? '笔记本' : '我的笔记'}
+                  {selectedNotebookId ? "笔记本" : "我的笔记"}
                 </h2>
               </div>
               <Button onClick={handleCreateNote}>新建笔记</Button>
@@ -136,7 +145,10 @@ export function NotesPageClient() {
               <select
                 value={`${sortBy}-${sortOrder}`}
                 onChange={(e) => {
-                  const [newSortBy, newSortOrder] = e.target.value.split('-') as [NoteSortBy, NoteSortOrder];
+                  const [newSortBy, newSortOrder] = e.target.value.split("-") as [
+                    NoteSortBy,
+                    NoteSortOrder,
+                  ];
                   setSortBy(newSortBy);
                   setSortOrder(newSortOrder);
                 }}
@@ -184,7 +196,7 @@ export function NotesPageClient() {
             <div className="text-center py-12">
               <p className="text-gray-500 mb-4">
                 {search || selectedNotebookId || selectedTagIds.length > 0
-                  ? '没有找到匹配的笔记'
+                  ? "没有找到匹配的笔记"
                   : '还没有笔记，点击"新建笔记"开始写作'}
               </p>
               {!search && !selectedNotebookId && selectedTagIds.length === 0 && (
@@ -196,7 +208,14 @@ export function NotesPageClient() {
           )}
         </div>
       </div>
+
+      {/* 删除确认对话框 */}
+      <DeleteConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={confirmDelete}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }
-

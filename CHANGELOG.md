@@ -1,5 +1,97 @@
 # 更新日志
 
+## [1.2.0] - 2025-11-04
+
+### UI 组件库升级 - shadcn/ui
+
+#### 🎨 主题系统
+- ✨ 全新紫葡萄色主题配色方案
+  - 主色：紫葡萄色 `hsl(280, 60%, 55%)`
+  - 背景：纯白色
+  - 完整的紫葡萄色阶（grape-50 到 grape-950）
+  - 完善的暗色模式支持
+- ✨ 自定义 CSS 变量系统
+- ✨ 紫色渐变背景支持
+- ✨ 主题配色完整文档
+
+#### 📦 新增 UI 组件
+- ✨ Avatar（头像组件）
+- ✨ Badge（徽章组件，6 种变体）
+- ✨ Dialog（对话框组件）
+- ✨ Dropdown Menu（下拉菜单组件）
+- ✨ Select（选择器组件）
+- ✨ Separator（分隔线组件）
+- ✨ Switch（开关组件）
+- ✨ Textarea（文本域组件）
+- ✨ Toast（提示通知组件）
+- ✨ Tooltip（工具提示组件）
+- ✨ Toaster（通知管理器）
+
+#### ✨ 功能优化
+- 🎯 全面优化删除功能，使用 Dialog 模态框替代原生 confirm 弹窗
+  - ✅ 笔记列表页删除功能优化
+  - ✅ 编辑器页删除功能优化
+  - ✅ 标签删除功能优化
+  - ✅ 笔记本删除功能优化
+  - 更好的用户体验和视觉效果
+  - 删除过程中显示加载状态
+  - 防止重复提交和误操作
+- ♻️ 代码重构：提取可复用的删除确认对话框组件 `DeleteConfirmDialog`
+  - 统一管理删除确认逻辑
+  - 提高代码复用性和可维护性
+  - 减少重复代码
+  - 4 个模块共享同一组件
+
+#### 🎯 实用类名
+- `.grape-gradient` - 紫色渐变背景
+- `.text-gradient-grape` - 渐变文字效果
+- `.grape-glow` - 紫色光晕效果
+- `.grape-border` - 紫色边框
+- `.card-hover-grape` - 卡片悬停效果
+- `.pulse-grape` - 脉冲动画
+- `.focus-grape` - 焦点状态增强
+- `.sidebar-accent` - 侧边栏装饰
+- `.spinner-grape` - 加载动画
+- `.page-title-grape` - 页面标题装饰
+- `.tag-grape` - 标签样式
+- `.notification-dot` - 通知点
+
+#### 🔧 技术改进
+- 📦 安装 Radix UI 组件库依赖
+  - @radix-ui/react-avatar
+  - @radix-ui/react-dialog
+  - @radix-ui/react-dropdown-menu
+  - @radix-ui/react-select
+  - @radix-ui/react-separator
+  - @radix-ui/react-slot
+  - @radix-ui/react-switch
+  - @radix-ui/react-toast
+  - @radix-ui/react-tooltip
+- 🔧 完善 Tailwind CSS 配置
+  - 新增紫葡萄色阶
+  - 新增自定义动画
+  - 新增渐变背景工具
+- 🔧 创建 `use-toast` hook
+- 🔧 优化滚动条样式
+- 🔧 优化选中状态样式
+
+#### 📝 文档更新
+- 📚 新增 `src/components/ui/README.md` - UI 组件使用文档
+- 📚 新增 `docs/THEME_GUIDE.md` - 完整主题使用指南
+- 📚 新增 `components.json` - shadcn/ui 配置文件
+- 📚 新增 `src/components/ui/index.ts` - 统一导出文件
+- 📚 所有组件包含完整的使用示例
+
+#### 🎨 视觉增强
+- 优化按钮交互效果
+- 优化卡片悬停动画
+- 优化表单元素样式
+- 优化对话框和弹出层样式
+- 统一圆角和阴影效果
+- 改进无障碍访问支持
+
+---
+
 ## [1.1.0] - 2025-11-04
 
 ### 新增功能

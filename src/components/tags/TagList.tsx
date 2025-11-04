@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Tag } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { DeleteConfirmDialog } from '@/components/common/DeleteConfirmDialog';
 
 interface TagListProps {
   selectedTagIds?: string[];
@@ -14,6 +15,9 @@ export function TagList({ selectedTagIds = [], onSelectTags }: TagListProps) {
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [tagToDelete, setTagToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchTags();
@@ -56,19 +60,25 @@ export function TagList({ selectedTagIds = [], onSelectTags }: TagListProps) {
     }
   };
 
-  const handleDeleteTag = async (tagId: string) => {
-    if (!confirm('确定要删除这个标签吗？')) {
-      return;
-    }
+  const handleDeleteTag = (tagId: string) => {
+    setTagToDelete(tagId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!tagToDelete) return;
 
     try {
-      const response = await fetch(`/api/tags/${tagId}`, {
+      setIsDeleting(true);
+      const response = await fetch(`/api/tags/${tagToDelete}`, {
         method: 'DELETE',
       });
 
       if (response.ok) {
-        setTags(tags.filter((tag) => tag.id !== tagId));
-        onSelectTags(selectedTagIds.filter((id) => id !== tagId));
+        setTags(tags.filter((tag) => tag.id !== tagToDelete));
+        onSelectTags(selectedTagIds.filter((id) => id !== tagToDelete));
+        setDeleteDialogOpen(false);
+        setTagToDelete(null);
       } else {
         const error = await response.json();
         alert(error.error || '删除标签失败');
@@ -76,6 +86,8 @@ export function TagList({ selectedTagIds = [], onSelectTags }: TagListProps) {
     } catch (error) {
       console.error('删除标签失败:', error);
       alert('删除标签失败');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -179,6 +191,16 @@ export function TagList({ selectedTagIds = [], onSelectTags }: TagListProps) {
           <p className="text-gray-500 text-sm">暂无标签，点击"新建"创建第一个标签</p>
         )}
       </div>
+
+      {/* 删除确认对话框 */}
+      <DeleteConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={confirmDelete}
+        isDeleting={isDeleting}
+        title="确认删除标签"
+        description="确定要删除这个标签吗？此操作无法撤销。"
+      />
     </div>
   );
 }
