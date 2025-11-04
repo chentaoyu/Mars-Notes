@@ -30,6 +30,34 @@ print_error() {
     echo -e "${RED}❌ $1${NC}"
 }
 
+# 检测 Docker Compose 命令
+detect_docker_compose() {
+    # 优先使用 docker compose（新版本）
+    if docker compose version &> /dev/null; then
+        echo "docker compose"
+    # 回退到 docker-compose（旧版本）
+    elif command -v docker-compose &> /dev/null; then
+        echo "docker-compose"
+    else
+        return 1
+    fi
+}
+
+# 获取 Docker Compose 命令
+DOCKER_COMPOSE=""
+get_docker_compose_cmd() {
+    if [ -z "$DOCKER_COMPOSE" ]; then
+        DOCKER_COMPOSE=$(detect_docker_compose)
+        if [ $? -ne 0 ]; then
+            print_error "Docker Compose 未安装或无法使用"
+            print_info "请确保已安装 Docker Desktop 或 Docker Engine + Docker Compose"
+            print_info "访问：https://docs.docker.com/get-docker/"
+            exit 1
+        fi
+    fi
+    echo "$DOCKER_COMPOSE"
+}
+
 # 检查 .env 文件
 check_env() {
     if [ ! -f .env ]; then
@@ -93,72 +121,83 @@ EOF
 
 # 开发环境命令
 dev_up() {
+    local dc=$(get_docker_compose_cmd)
     print_info "启动开发环境..."
-    docker-compose -f docker-compose.dev.yml up -d
+    $dc -f docker-compose.dev.yml up -d
     print_success "开发环境已启动"
     print_info "应用地址: http://localhost:3000"
 }
 
 dev_down() {
+    local dc=$(get_docker_compose_cmd)
     print_info "停止开发环境..."
-    docker-compose -f docker-compose.dev.yml down
+    $dc -f docker-compose.dev.yml down
     print_success "开发环境已停止"
 }
 
 dev_restart() {
+    local dc=$(get_docker_compose_cmd)
     print_info "重启开发环境..."
-    docker-compose -f docker-compose.dev.yml restart
+    $dc -f docker-compose.dev.yml restart
     print_success "开发环境已重启"
 }
 
 dev_logs() {
-    docker-compose -f docker-compose.dev.yml logs -f
+    local dc=$(get_docker_compose_cmd)
+    $dc -f docker-compose.dev.yml logs -f
 }
 
 dev_build() {
+    local dc=$(get_docker_compose_cmd)
     print_info "重新构建开发环境..."
-    docker-compose -f docker-compose.dev.yml up -d --build
+    $dc -f docker-compose.dev.yml up -d --build
     print_success "开发环境已重新构建"
 }
 
 # 生产环境命令
 prod_up() {
+    local dc=$(get_docker_compose_cmd)
     print_info "启动生产环境..."
-    docker-compose up -d
+    $dc up -d
     print_success "生产环境已启动"
     print_info "应用地址: http://localhost:3000"
 }
 
 prod_down() {
+    local dc=$(get_docker_compose_cmd)
     print_info "停止生产环境..."
-    docker-compose down
+    $dc down
     print_success "生产环境已停止"
 }
 
 prod_restart() {
+    local dc=$(get_docker_compose_cmd)
     print_info "重启生产环境..."
-    docker-compose restart
+    $dc restart
     print_success "生产环境已重启"
 }
 
 prod_logs() {
-    docker-compose logs -f
+    local dc=$(get_docker_compose_cmd)
+    $dc logs -f
 }
 
 prod_build() {
+    local dc=$(get_docker_compose_cmd)
     print_info "重新构建生产环境..."
-    docker-compose up -d --build
+    $dc up -d --build
     print_success "生产环境已重新构建"
 }
 
 # 数据库命令
 db_migrate() {
+    local dc=$(get_docker_compose_cmd)
     print_info "执行数据库迁移..."
     if docker ps | grep -q notebook-app; then
-        docker-compose exec app npx prisma migrate deploy
+        $dc exec app npx prisma migrate deploy
         print_success "数据库迁移完成"
     elif docker ps | grep -q notebook-app-dev; then
-        docker-compose -f docker-compose.dev.yml exec app npx prisma migrate deploy
+        $dc -f docker-compose.dev.yml exec app npx prisma migrate deploy
         print_success "数据库迁移完成"
     else
         print_error "应用容器未运行，请先启动环境"
@@ -167,11 +206,12 @@ db_migrate() {
 }
 
 db_studio() {
+    local dc=$(get_docker_compose_cmd)
     print_info "启动 Prisma Studio..."
     if docker ps | grep -q notebook-app; then
-        docker-compose exec app npx prisma studio
+        $dc exec app npx prisma studio
     elif docker ps | grep -q notebook-app-dev; then
-        docker-compose -f docker-compose.dev.yml exec app npx prisma studio
+        $dc -f docker-compose.dev.yml exec app npx prisma studio
     else
         print_error "应用容器未运行，请先启动环境"
         exit 1
@@ -179,13 +219,14 @@ db_studio() {
 }
 
 db_backup() {
+    local dc=$(get_docker_compose_cmd)
     print_info "备份数据库..."
     BACKUP_FILE="backup-$(date +%Y%m%d-%H%M%S).sql"
     if docker ps | grep -q notebook-postgres; then
-        docker-compose exec -T postgres pg_dump -U notebook notebook > "$BACKUP_FILE"
+        $dc exec -T postgres pg_dump -U notebook notebook > "$BACKUP_FILE"
         print_success "数据库已备份到: $BACKUP_FILE"
     elif docker ps | grep -q notebook-postgres-dev; then
-        docker-compose -f docker-compose.dev.yml exec -T postgres pg_dump -U notebook notebook_dev > "$BACKUP_FILE"
+        $dc -f docker-compose.dev.yml exec -T postgres pg_dump -U notebook notebook_dev > "$BACKUP_FILE"
         print_success "数据库已备份到: $BACKUP_FILE"
     else
         print_error "数据库容器未运行"
@@ -194,6 +235,7 @@ db_backup() {
 }
 
 db_restore() {
+    local dc=$(get_docker_compose_cmd)
     if [ -z "$2" ]; then
         print_error "请指定备份文件: ./docker.sh db:restore <backup-file>"
         exit 1
@@ -214,10 +256,10 @@ db_restore() {
     
     print_info "恢复数据库..."
     if docker ps | grep -q notebook-postgres; then
-        docker-compose exec -T postgres psql -U notebook notebook < "$BACKUP_FILE"
+        $dc exec -T postgres psql -U notebook notebook < "$BACKUP_FILE"
         print_success "数据库已恢复"
     elif docker ps | grep -q notebook-postgres-dev; then
-        docker-compose -f docker-compose.dev.yml exec -T postgres psql -U notebook notebook_dev < "$BACKUP_FILE"
+        $dc -f docker-compose.dev.yml exec -T postgres psql -U notebook notebook_dev < "$BACKUP_FILE"
         print_success "数据库已恢复"
     else
         print_error "数据库容器未运行"
@@ -227,27 +269,31 @@ db_restore() {
 
 # 工具命令
 show_ps() {
+    local dc=$(get_docker_compose_cmd)
     print_info "容器状态:"
-    docker-compose ps 2>/dev/null || true
-    docker-compose -f docker-compose.dev.yml ps 2>/dev/null || true
+    $dc ps 2>/dev/null || true
+    $dc -f docker-compose.dev.yml ps 2>/dev/null || true
 }
 
 show_logs() {
+    local dc=$(get_docker_compose_cmd)
     if docker ps | grep -q notebook-app-dev; then
-        docker-compose -f docker-compose.dev.yml logs -f
+        $dc -f docker-compose.dev.yml logs -f
     else
-        docker-compose logs -f
+        $dc logs -f
     fi
 }
 
 clean() {
+    local dc=$(get_docker_compose_cmd)
     print_warning "清理容器和镜像..."
-    docker-compose down 2>/dev/null || true
-    docker-compose -f docker-compose.dev.yml down 2>/dev/null || true
+    $dc down 2>/dev/null || true
+    $dc -f docker-compose.dev.yml down 2>/dev/null || true
     print_success "清理完成"
 }
 
 clean_all() {
+    local dc=$(get_docker_compose_cmd)
     print_warning "这将删除所有容器、镜像和数据卷！"
     read -p "确认要继续吗？输入 'yes' 确认: " confirm
     if [ "$confirm" != "yes" ]; then
@@ -256,8 +302,8 @@ clean_all() {
     fi
     
     print_warning "清理所有资源..."
-    docker-compose down -v --rmi all 2>/dev/null || true
-    docker-compose -f docker-compose.dev.yml down -v --rmi all 2>/dev/null || true
+    $dc down -v --rmi all 2>/dev/null || true
+    $dc -f docker-compose.dev.yml down -v --rmi all 2>/dev/null || true
     print_success "清理完成"
 }
 
@@ -266,12 +312,7 @@ main() {
     # 检查 Docker 是否安装
     if ! command -v docker &> /dev/null; then
         print_error "Docker 未安装，请先安装 Docker"
-        exit 1
-    fi
-
-    # 检查 Docker Compose 是否安装
-    if ! command -v docker-compose &> /dev/null; then
-        print_error "Docker Compose 未安装，请先安装 Docker Compose"
+        print_info "访问：https://docs.docker.com/get-docker/"
         exit 1
     fi
 
@@ -281,8 +322,12 @@ main() {
         exit 0
     fi
 
-    # 除了 help 命令外，都需要检查 .env
+    # 除了 help 命令外，都需要检查命令和 .env
     if [ "$1" != "help" ]; then
+        # 检查 Docker Compose（会在第一次调用时检测）
+        get_docker_compose_cmd > /dev/null
+        
+        # 检查 .env 文件
         check_env
     fi
 
