@@ -5,9 +5,9 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "云笔记 - 简洁高效的在线笔记",
-  description: "一个基于 Next.js 的云笔记应用，支持 Markdown 编辑",
-  keywords: ["笔记", "Markdown", "云笔记", "在线笔记"],
+  title: "Mars-Notes - 简洁高效的在线笔记",
+  description: "一个基于 Next.js 的在线笔记应用，支持 Markdown 编辑",
+  keywords: ["笔记", "Markdown", "Mars-Notes", "在线笔记"],
 };
 
 export default function RootLayout({

@@ -1,7 +1,7 @@
 {
-  "name": "note-book",
+  "name": "mars-notes",
   "version": "1.0.0",
-  "description": "一个简洁、高效的在线云笔记应用",
+  "description": "一个简洁、高效的在线笔记应用 Mars-Notes",
   "private": true,
   "scripts": {
     "dev": "next dev --turbo",

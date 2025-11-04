@@ -1,8 +1,8 @@
-# 云笔记系统 - API 设计文档
+# Mars-Notes - API 设计文档
 
 ## 文档信息
 
-- **项目名称**: 云笔记 (CloudNote)
+- **项目名称**: Mars-Notes
 - **API 版本**: v1.0
 - **文档版本**: 1.0
 - **创建日期**: 2025-11-04
@@ -1546,7 +1546,7 @@ export const GET = withAuth(async (req, session) => {
 
 ## 12. 总结
 
-本文档详细描述了云笔记系统的 API 设计，包括：
+本文档详细描述了 Mars-Notes 系统的 API 设计，包括：
 
 ✅ **完整的 API 端点**：覆盖认证和笔记管理所有功能  
 ✅ **标准的 RESTful 设计**：符合行业最佳实践  

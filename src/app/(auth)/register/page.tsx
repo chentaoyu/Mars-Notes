@@ -6,7 +6,7 @@ export default function RegisterPage() {
     <Card>
       <CardHeader>
         <CardTitle>注册</CardTitle>
-        <CardDescription>创建您的云笔记账号</CardDescription>
+        <CardDescription>创建您的 Mars-Notes 账号</CardDescription>
       </CardHeader>
       <CardContent>
         <RegisterForm />

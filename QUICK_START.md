@@ -1,4 +1,4 @@
-# 云笔记 - 快速启动指南
+# Mars-Notes - 快速启动指南
 
 ## 🚀 项目已完成搭建！
 
@@ -262,7 +262,7 @@ pnpm docker:prod:logs    # 查看日志
 ## 📁 项目结构
 
 ```
-note-book/
+mars-notes/
 ├── src/
 │   ├── app/
 │   │   ├── (auth)/              # 认证页面（登录/注册）

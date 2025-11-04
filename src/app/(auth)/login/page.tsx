@@ -6,7 +6,7 @@ export default function LoginPage() {
     <Card>
       <CardHeader>
         <CardTitle>登录</CardTitle>
-        <CardDescription>使用您的账号登录云笔记</CardDescription>
+        <CardDescription>使用您的账号登录 Mars-Notes</CardDescription>
       </CardHeader>
       <CardContent>
         <LoginForm />

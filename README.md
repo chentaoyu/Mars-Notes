@@ -1,6 +1,6 @@
-# 云笔记系统 (CloudNote)
+# Mars-Notes
 
-> 一个简洁、高效的在线云笔记应用，支持 Markdown 编辑，基于 Next.js + React + PostgreSQL 构建
+> 一个简洁、高效的在线笔记应用，支持 Markdown 编辑，基于 Next.js + React + PostgreSQL 构建
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
 ![Next.js](https://img.shields.io/badge/Next.js-14+-black)
@@ -12,7 +12,7 @@
 
 ## 📖 项目简介
 
-云笔记是一款面向个人用户的轻量级在线笔记应用，提供流畅的 Markdown 编辑与管理体验。
+Mars-Notes 是一款面向个人用户的轻量级在线笔记应用，提供流畅的 Markdown 编辑与管理体验。
 
 **核心特性**：
 - ✅ 用户注册和登录（账号密码）
@@ -38,8 +38,8 @@
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/your-username/note-book.git
-cd note-book
+git clone https://github.com/chentaoyu/mars-notes.git
+cd mars-notes
 
 # 2. 安装依赖
 npm install
@@ -102,7 +102,7 @@ npm run dev
 ## 📁 项目结构
 
 ```
-note-book/
+mars-notes/
 ├── docs/                      # 📚 项目文档
 │   ├── PRD.md                # 产品需求文档
 │   ├── ARCHITECTURE.md       # 架构设计文档
@@ -267,7 +267,7 @@ docker-compose logs -f
 
 ```bash
 # 克隆代码
-git clone https://github.com/your-username/note-book.git
+git clone https://github.com/chentaoyu/mars-notes.git
 
 # 安装依赖
 npm ci --production
@@ -276,7 +276,7 @@ npm ci --production
 npm run build
 
 # 使用 PM2 启动
-pm2 start npm --name "note-book" -- start
+pm2 start npm --name "mars-notes" -- start
 ```
 
 详细部署指南请参考：[DEPLOYMENT.md](./docs/DEPLOYMENT.md)
@@ -425,8 +425,8 @@ npx prisma generate      # 生成 Prisma Client
 
 ## 📮 联系方式
 
-- **项目地址**: https://github.com/your-username/note-book
-- **问题反馈**: https://github.com/your-username/note-book/issues
+- **项目地址**: https://github.com/chentaoyu/mars-notes
+- **问题反馈**: https://github.com/chentaoyu/mars-notes/issues
 - **邮箱**: your-email@example.com
 
 ---
@@ -444,5 +444,5 @@ npx prisma generate      # 生成 Prisma Client
 
 ---
 
-Made with ❤️ by [Your Name](https://github.com/your-username)
+Made with ❤️ by [Su qin](https://github.com/chentaoyu)
 

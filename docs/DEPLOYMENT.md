@@ -1,8 +1,8 @@
-# 云笔记系统 - 部署指南
+# Mars-Notes - 部署指南
 
 ## 文档信息
 
-- **项目名称**: 云笔记 (CloudNote)
+- **项目名称**: Mars-Notes
 - **版本**: v1.0
 - **文档版本**: 1.0
 - **创建日期**: 2025-11-04
@@ -64,10 +64,10 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/your-username/note-book.git
+git clone https://github.com/chentaoyu/mars-notes.git
 
 # 进入项目目录
-cd note-book
+cd mars-notes
 ```
 
 ### 2.2 安装依赖
@@ -423,7 +423,7 @@ async function main() {
   // 创建测试笔记
   await prisma.note.create({
     data: {
-      title: '欢迎使用云笔记',
+      title: '欢迎使用 Mars-Notes',
       content: '# 欢迎\n\n这是你的第一篇笔记！',
       userId: user.id,
     },
@@ -701,8 +701,8 @@ sudo npm install -g pm2
 ```bash
 # 1. 克隆代码
 cd /var/www
-git clone https://github.com/your-username/note-book.git
-cd note-book
+git clone https://github.com/chentaoyu/mars-notes.git
+cd mars-notes
 
 # 2. 安装依赖
 npm ci --production
@@ -719,7 +719,7 @@ npx prisma generate
 npm run build
 
 # 6. 使用 PM2 启动
-pm2 start npm --name "note-book" -- start
+pm2 start npm --name "mars-notes" -- start
 pm2 save
 pm2 startup
 ```
@@ -727,7 +727,7 @@ pm2 startup
 #### **Nginx 配置**
 
 ```nginx
-# /etc/nginx/sites-available/note-book
+# /etc/nginx/sites-available/mars-notes
 server {
     listen 80;
     server_name note.yourdomain.com;
@@ -748,7 +748,7 @@ server {
 
 ```bash
 # 启用站点
-sudo ln -s /etc/nginx/sites-available/note-book /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/mars-notes /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl reload nginx
 ```
@@ -1250,7 +1250,7 @@ REINDEX TABLE notes;
 
 ## 12. 总结
 
-本文档提供了云笔记系统的完整部署指南，涵盖：
+本文档提供了 Mars-Notes 系统的完整部署指南，涵盖：
 
 ✅ **本地开发环境搭建**：从零开始配置开发环境  
 ✅ **环境变量管理**：安全的配置管理  
@@ -1270,7 +1270,7 @@ REINDEX TABLE notes;
 
 **需要帮助？**
 
-- 查看 [GitHub Issues](https://github.com/your-username/note-book/issues)
+- 查看 [GitHub Issues](https://github.com/chentaoyu/mars-notes/issues)
 - 阅读 [Next.js 文档](https://nextjs.org/docs)
 - 查看 [Prisma 文档](https://www.prisma.io/docs)
 

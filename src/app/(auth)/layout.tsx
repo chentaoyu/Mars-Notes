@@ -5,7 +5,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold tracking-tight">云笔记</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Mars-Notes</h1>
           <p className="mt-2 text-muted-foreground">简洁、高效的在线笔记</p>
         </div>
         {children}
