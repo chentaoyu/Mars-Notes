@@ -3,8 +3,8 @@
 ## 文档信息
 
 - **项目名称**: Mars-Notes
-- **API 版本**: v1.0
-- **文档版本**: 1.0
+- **API 版本**: v1.1
+- **文档版本**: 1.1
 - **创建日期**: 2025-11-04
 - **最后更新**: 2025-11-04
 - **Base URL**: `https://your-domain.com/api`
@@ -18,10 +18,11 @@
 3. [通用规范](#3-通用规范)
 4. [认证 API](#4-认证-api)
 5. [笔记 API](#5-笔记-api)
-6. [用户 API](#6-用户-api)
-7. [错误处理](#7-错误处理)
-8. [速率限制](#8-速率限制)
-9. [测试指南](#9-测试指南)
+6. [笔记本 API](#6-笔记本-api)
+7. [标签 API](#7-标签-api)
+8. [错误处理](#8-错误处理)
+9. [速率限制](#9-速率限制)
+10. [测试指南](#10-测试指南)
 
 ---
 
@@ -38,6 +39,7 @@
 ┌─────────────────────────────────────────┐
 │         Next.js API Routes              │
 │  /api/auth/*  |  /api/notes/*          │
+│  /api/notebooks/*  |  /api/tags/*      │
 └────────────────┬────────────────────────┘
                  │
          ┌───────┴───────┐
@@ -67,15 +69,24 @@
 | | `/api/auth/[...nextauth]` | GET/POST | ❌ | NextAuth.js 认证 |
 | | `/api/auth/session` | GET | ✅ | 获取当前会话 |
 | **笔记** |
-| | `/api/notes` | GET | ✅ | 获取笔记列表 |
+| | `/api/notes` | GET | ✅ | 获取笔记列表（支持过滤） |
 | | `/api/notes` | POST | ✅ | 创建新笔记 |
 | | `/api/notes/[id]` | GET | ✅ | 获取单个笔记 |
 | | `/api/notes/[id]` | PUT | ✅ | 更新笔记 |
 | | `/api/notes/[id]` | DELETE | ✅ | 删除笔记 |
 | | `/api/notes/search` | GET | ✅ | 搜索笔记 |
-| **用户** |
-| | `/api/user/me` | GET | ✅ | 获取当前用户信息 |
-| | `/api/user/me` | PUT | ✅ | 更新用户信息 |
+| **笔记本** |
+| | `/api/notebooks` | GET | ✅ | 获取笔记本列表 |
+| | `/api/notebooks` | POST | ✅ | 创建新笔记本 |
+| | `/api/notebooks/[id]` | GET | ✅ | 获取单个笔记本 |
+| | `/api/notebooks/[id]` | PUT | ✅ | 更新笔记本 |
+| | `/api/notebooks/[id]` | DELETE | ✅ | 删除笔记本 |
+| **标签** |
+| | `/api/tags` | GET | ✅ | 获取标签列表 |
+| | `/api/tags` | POST | ✅ | 创建新标签 |
+| | `/api/tags/[id]` | GET | ✅ | 获取单个标签 |
+| | `/api/tags/[id]` | PUT | ✅ | 更新标签 |
+| | `/api/tags/[id]` | DELETE | ✅ | 删除标签 |
 
 ---
 
@@ -503,7 +514,7 @@ null
 
 **端点**: `GET /api/notes`
 
-**描述**: 获取当前用户的所有笔记
+**描述**: 获取当前用户的所有笔记，支持多种过滤条件
 
 **认证**: ✅ 需要
 
@@ -512,14 +523,30 @@ null
 | 参数 | 类型 | 必填 | 默认值 | 说明 |
 |-----|------|------|--------|------|
 | page | number | ❌ | 1 | 页码 |
-| limit | number | ❌ | 20 | 每页数量 |
+| limit | number | ❌ | 20 | 每页数量（最大100） |
 | sort | string | ❌ | updatedAt | 排序字段 |
-| order | string | ❌ | desc | 排序方向 |
+| order | string | ❌ | desc | 排序方向（asc/desc） |
+| search | string | ❌ | - | 搜索关键词（标题或内容） |
+| notebookId | string | ❌ | - | 笔记本ID过滤 |
+| tagIds | string | ❌ | - | 标签ID列表（逗号分隔） |
 
 **请求示例**
 
 ```bash
+# 基础查询
 GET /api/notes?page=1&limit=20&sort=updatedAt&order=desc
+
+# 搜索笔记
+GET /api/notes?search=React
+
+# 按笔记本过滤
+GET /api/notes?notebookId=clh1234567890
+
+# 按标签过滤
+GET /api/notes?tagIds=tag1,tag2
+
+# 组合过滤
+GET /api/notes?notebookId=clh1234567890&tagIds=tag1&search=React
 ```
 
 **成功响应** (200 OK)
@@ -531,15 +558,40 @@ GET /api/notes?page=1&limit=20&sort=updatedAt&order=desc
       "id": "clh1234567890abcdef",
       "title": "React Hooks 学习",
       "content": "# React Hooks\n\n## useState\n...",
+      "notebookId": "notebook123",
       "createdAt": "2025-11-04T10:00:00.000Z",
-      "updatedAt": "2025-11-04T15:30:00.000Z"
+      "updatedAt": "2025-11-04T15:30:00.000Z",
+      "notebook": {
+        "id": "notebook123",
+        "name": "前端开发",
+        "color": "#3b82f6",
+        "icon": "📘"
+      },
+      "tags": [
+        {
+          "id": "tag1",
+          "name": "React",
+          "color": "#61dafb",
+          "userId": "user123",
+          "createdAt": "2025-11-04T10:00:00.000Z",
+          "updatedAt": "2025-11-04T10:00:00.000Z"
+        }
+      ]
     },
     {
       "id": "clh9876543210zyxwvu",
       "title": "Next.js 笔记",
       "content": "# Next.js\n\n## App Router\n...",
+      "notebookId": "notebook123",
       "createdAt": "2025-11-03T14:00:00.000Z",
-      "updatedAt": "2025-11-04T12:00:00.000Z"
+      "updatedAt": "2025-11-04T12:00:00.000Z",
+      "notebook": {
+        "id": "notebook123",
+        "name": "前端开发",
+        "color": "#3b82f6",
+        "icon": "📘"
+      },
+      "tags": []
     }
   ],
   "pagination": {
@@ -619,7 +671,9 @@ export async function GET(req: NextRequest) {
 ```json
 {
   "title": "我的新笔记",
-  "content": "# 标题\n\n这是笔记内容..."
+  "content": "# 标题\n\n这是笔记内容...",
+  "notebookId": "notebook123",
+  "tagIds": ["tag1", "tag2"]
 }
 ```
 
@@ -629,6 +683,8 @@ export async function GET(req: NextRequest) {
 |-----|------|------|---------|------|
 | title | string | ✅ | 1-200 字符 | 笔记标题 |
 | content | string | ❌ | 最大 100,000 字符 | 笔记内容（Markdown） |
+| notebookId | string | ❌ | - | 所属笔记本ID |
+| tagIds | string[] | ❌ | - | 标签ID数组 |
 
 **成功响应** (201 Created)
 
@@ -638,8 +694,33 @@ export async function GET(req: NextRequest) {
   "title": "我的新笔记",
   "content": "# 标题\n\n这是笔记内容...",
   "userId": "clh0987654321zyxwvu",
+  "notebookId": "notebook123",
   "createdAt": "2025-11-04T10:00:00.000Z",
-  "updatedAt": "2025-11-04T10:00:00.000Z"
+  "updatedAt": "2025-11-04T10:00:00.000Z",
+  "notebook": {
+    "id": "notebook123",
+    "name": "前端开发",
+    "color": "#3b82f6",
+    "icon": "📘"
+  },
+  "tags": [
+    {
+      "id": "tag1",
+      "name": "React",
+      "color": "#61dafb",
+      "userId": "user123",
+      "createdAt": "2025-11-04T10:00:00.000Z",
+      "updatedAt": "2025-11-04T10:00:00.000Z"
+    },
+    {
+      "id": "tag2",
+      "name": "JavaScript",
+      "color": "#f7df1e",
+      "userId": "user123",
+      "createdAt": "2025-11-04T10:00:00.000Z",
+      "updatedAt": "2025-11-04T10:00:00.000Z"
+    }
+  ]
 }
 ```
 
@@ -739,8 +820,25 @@ GET /api/notes/clh1234567890abcdef
   "title": "React Hooks 学习",
   "content": "# React Hooks\n\n## useState\n...",
   "userId": "clh0987654321zyxwvu",
+  "notebookId": "notebook123",
   "createdAt": "2025-11-04T10:00:00.000Z",
-  "updatedAt": "2025-11-04T15:30:00.000Z"
+  "updatedAt": "2025-11-04T15:30:00.000Z",
+  "notebook": {
+    "id": "notebook123",
+    "name": "前端开发",
+    "color": "#3b82f6",
+    "icon": "📘"
+  },
+  "tags": [
+    {
+      "id": "tag1",
+      "name": "React",
+      "color": "#61dafb",
+      "userId": "user123",
+      "createdAt": "2025-11-04T10:00:00.000Z",
+      "updatedAt": "2025-11-04T10:00:00.000Z"
+    }
+  ]
 }
 ```
 
@@ -822,7 +920,9 @@ export async function GET(
 ```json
 {
   "title": "更新后的标题",
-  "content": "更新后的内容..."
+  "content": "更新后的内容...",
+  "notebookId": "notebook456",
+  "tagIds": ["tag3", "tag4"]
 }
 ```
 
@@ -832,6 +932,8 @@ export async function GET(
 |-----|------|------|---------|------|
 | title | string | ❌ | 1-200 字符 | 笔记标题 |
 | content | string | ❌ | 最大 100,000 字符 | 笔记内容 |
+| notebookId | string | ❌ | - | 所属笔记本ID |
+| tagIds | string[] | ❌ | - | 标签ID数组（会完全替换现有标签） |
 
 **成功响应** (200 OK)
 
@@ -841,8 +943,25 @@ export async function GET(
   "title": "更新后的标题",
   "content": "更新后的内容...",
   "userId": "clh0987654321zyxwvu",
+  "notebookId": "notebook456",
   "createdAt": "2025-11-04T10:00:00.000Z",
-  "updatedAt": "2025-11-04T16:00:00.000Z"
+  "updatedAt": "2025-11-04T16:00:00.000Z",
+  "notebook": {
+    "id": "notebook456",
+    "name": "后端开发",
+    "color": "#10b981",
+    "icon": "📗"
+  },
+  "tags": [
+    {
+      "id": "tag3",
+      "name": "Node.js",
+      "color": "#68a063",
+      "userId": "user123",
+      "createdAt": "2025-11-04T10:00:00.000Z",
+      "updatedAt": "2025-11-04T10:00:00.000Z"
+    }
+  ]
 }
 ```
 
@@ -1142,13 +1261,13 @@ export async function GET(req: NextRequest) {
 
 ---
 
-## 6. 用户 API
+## 6. 笔记本 API
 
-### 6.1 获取当前用户信息
+### 6.1 获取笔记本列表
 
-**端点**: `GET /api/user/me`
+**端点**: `GET /api/notebooks`
 
-**描述**: 获取当前登录用户的详细信息
+**描述**: 获取当前用户的所有笔记本
 
 **认证**: ✅ 需要
 
@@ -1156,23 +1275,45 @@ export async function GET(req: NextRequest) {
 
 ```json
 {
-  "id": "clh0987654321zyxwvu",
-  "email": "user@example.com",
-  "name": "张三",
-  "image": null,
-  "createdAt": "2025-11-01T10:00:00.000Z",
-  "stats": {
-    "totalNotes": 42,
-    "lastLogin": "2025-11-04T10:00:00.000Z"
-  }
+  "data": [
+    {
+      "id": "notebook123",
+      "userId": "user123",
+      "name": "前端开发",
+      "description": "前端相关技术笔记",
+      "color": "#3b82f6",
+      "icon": "📘",
+      "sortOrder": 0,
+      "createdAt": "2025-11-04T10:00:00.000Z",
+      "updatedAt": "2025-11-04T10:00:00.000Z",
+      "_count": {
+        "notes": 15
+      }
+    },
+    {
+      "id": "notebook456",
+      "userId": "user123",
+      "name": "后端开发",
+      "description": "后端技术学习笔记",
+      "color": "#10b981",
+      "icon": "📗",
+      "sortOrder": 1,
+      "createdAt": "2025-11-03T10:00:00.000Z",
+      "updatedAt": "2025-11-03T10:00:00.000Z",
+      "_count": {
+        "notes": 8
+      }
+    }
+  ],
+  "message": "获取笔记本列表成功"
 }
 ```
 
-### 6.2 更新用户信息
+### 6.2 创建笔记本
 
-**端点**: `PUT /api/user/me`
+**端点**: `POST /api/notebooks`
 
-**描述**: 更新当前用户的信息
+**描述**: 创建新笔记本
 
 **认证**: ✅ 需要
 
@@ -1180,40 +1321,475 @@ export async function GET(req: NextRequest) {
 
 ```json
 {
-  "name": "新昵称",
-  "image": "https://example.com/avatar.jpg"
+  "name": "新笔记本",
+  "description": "笔记本描述",
+  "color": "#3b82f6",
+  "icon": "📘"
 }
 ```
+
+**字段说明**
+
+| 字段 | 类型 | 必填 | 验证规则 | 说明 |
+|-----|------|------|---------|------|
+| name | string | ✅ | 1-100 字符 | 笔记本名称 |
+| description | string | ❌ | 最大 500 字符 | 笔记本描述 |
+| color | string | ❌ | 最大 20 字符 | 颜色代码 |
+| icon | string | ❌ | 最大 50 字符 | 图标（emoji 或图标名称） |
+
+**成功响应** (201 Created)
+
+```json
+{
+  "data": {
+    "id": "notebook789",
+    "userId": "user123",
+    "name": "新笔记本",
+    "description": "笔记本描述",
+    "color": "#3b82f6",
+    "icon": "📘",
+    "sortOrder": 2,
+    "createdAt": "2025-11-04T10:00:00.000Z",
+    "updatedAt": "2025-11-04T10:00:00.000Z",
+    "_count": {
+      "notes": 0
+    }
+  },
+  "message": "笔记本创建成功"
+}
+```
+
+**错误响应**
+
+```json
+// 400 Bad Request - 笔记本名称已存在
+{
+  "error": "笔记本名称已存在",
+  "code": "NOTEBOOK_EXISTS"
+}
+
+// 400 Bad Request - 数据验证失败
+{
+  "error": "数据验证失败",
+  "code": "VALIDATION_ERROR",
+  "details": [
+    {
+      "message": "笔记本名称不能为空",
+      "path": ["name"]
+    }
+  ]
+}
+```
+
+### 6.3 获取单个笔记本
+
+**端点**: `GET /api/notebooks/[id]`
+
+**描述**: 获取指定笔记本的详细信息
+
+**认证**: ✅ 需要
+
+**路径参数**
+
+| 参数 | 类型 | 说明 |
+|-----|------|------|
+| id | string | 笔记本 ID |
 
 **成功响应** (200 OK)
 
 ```json
 {
-  "id": "clh0987654321zyxwvu",
-  "email": "user@example.com",
-  "name": "新昵称",
-  "image": "https://example.com/avatar.jpg",
-  "updatedAt": "2025-11-04T16:00:00.000Z"
+  "data": {
+    "id": "notebook123",
+    "userId": "user123",
+    "name": "前端开发",
+    "description": "前端相关技术笔记",
+    "color": "#3b82f6",
+    "icon": "📘",
+    "sortOrder": 0,
+    "createdAt": "2025-11-04T10:00:00.000Z",
+    "updatedAt": "2025-11-04T10:00:00.000Z",
+    "_count": {
+      "notes": 15
+    }
+  },
+  "message": "获取笔记本成功"
+}
+```
+
+**错误响应**
+
+```json
+// 404 Not Found
+{
+  "error": "笔记本不存在",
+  "code": "NOTEBOOK_NOT_FOUND"
+}
+
+// 403 Forbidden
+{
+  "error": "无权访问此笔记本",
+  "code": "FORBIDDEN"
+}
+```
+
+### 6.4 更新笔记本
+
+**端点**: `PUT /api/notebooks/[id]`
+
+**描述**: 更新指定笔记本
+
+**认证**: ✅ 需要
+
+**路径参数**
+
+| 参数 | 类型 | 说明 |
+|-----|------|------|
+| id | string | 笔记本 ID |
+
+**请求体**
+
+```json
+{
+  "name": "更新后的名称",
+  "description": "更新后的描述",
+  "color": "#ef4444",
+  "icon": "📕",
+  "sortOrder": 5
+}
+```
+
+**字段说明**
+
+| 字段 | 类型 | 必填 | 验证规则 | 说明 |
+|-----|------|------|---------|------|
+| name | string | ❌ | 1-100 字符 | 笔记本名称 |
+| description | string | ❌ | 最大 500 字符 | 笔记本描述 |
+| color | string | ❌ | 最大 20 字符 | 颜色代码 |
+| icon | string | ❌ | 最大 50 字符 | 图标 |
+| sortOrder | number | ❌ | 整数 | 排序顺序 |
+
+**成功响应** (200 OK)
+
+```json
+{
+  "data": {
+    "id": "notebook123",
+    "userId": "user123",
+    "name": "更新后的名称",
+    "description": "更新后的描述",
+    "color": "#ef4444",
+    "icon": "📕",
+    "sortOrder": 5,
+    "createdAt": "2025-11-04T10:00:00.000Z",
+    "updatedAt": "2025-11-04T16:00:00.000Z",
+    "_count": {
+      "notes": 15
+    }
+  },
+  "message": "笔记本更新成功"
+}
+```
+
+### 6.5 删除笔记本
+
+**端点**: `DELETE /api/notebooks/[id]`
+
+**描述**: 删除指定笔记本（笔记本必须为空）
+
+**认证**: ✅ 需要
+
+**路径参数**
+
+| 参数 | 类型 | 说明 |
+|-----|------|------|
+| id | string | 笔记本 ID |
+
+**成功响应** (200 OK)
+
+```json
+{
+  "message": "笔记本删除成功"
+}
+```
+
+**错误响应**
+
+```json
+// 400 Bad Request - 笔记本不为空
+{
+  "error": "笔记本中还有笔记，无法删除",
+  "code": "NOTEBOOK_NOT_EMPTY"
+}
+
+// 404 Not Found
+{
+  "error": "笔记本不存在",
+  "code": "NOTEBOOK_NOT_FOUND"
 }
 ```
 
 ---
 
-## 7. 错误处理
+## 7. 标签 API
 
-### 7.1 错误码列表
+### 7.1 获取标签列表
+
+**端点**: `GET /api/tags`
+
+**描述**: 获取当前用户的所有标签
+
+**认证**: ✅ 需要
+
+**成功响应** (200 OK)
+
+```json
+{
+  "data": [
+    {
+      "id": "tag1",
+      "userId": "user123",
+      "name": "React",
+      "color": "#61dafb",
+      "createdAt": "2025-11-04T10:00:00.000Z",
+      "updatedAt": "2025-11-04T10:00:00.000Z",
+      "_count": {
+        "notes": 10
+      }
+    },
+    {
+      "id": "tag2",
+      "userId": "user123",
+      "name": "JavaScript",
+      "color": "#f7df1e",
+      "createdAt": "2025-11-03T10:00:00.000Z",
+      "updatedAt": "2025-11-03T10:00:00.000Z",
+      "_count": {
+        "notes": 15
+      }
+    }
+  ],
+  "message": "获取标签列表成功"
+}
+```
+
+### 7.2 创建标签
+
+**端点**: `POST /api/tags`
+
+**描述**: 创建新标签
+
+**认证**: ✅ 需要
+
+**请求体**
+
+```json
+{
+  "name": "新标签",
+  "color": "#3b82f6"
+}
+```
+
+**字段说明**
+
+| 字段 | 类型 | 必填 | 验证规则 | 说明 |
+|-----|------|------|---------|------|
+| name | string | ✅ | 1-50 字符 | 标签名称 |
+| color | string | ❌ | 最大 20 字符 | 颜色代码 |
+
+**成功响应** (201 Created)
+
+```json
+{
+  "data": {
+    "id": "tag3",
+    "userId": "user123",
+    "name": "新标签",
+    "color": "#3b82f6",
+    "createdAt": "2025-11-04T10:00:00.000Z",
+    "updatedAt": "2025-11-04T10:00:00.000Z",
+    "_count": {
+      "notes": 0
+    }
+  },
+  "message": "标签创建成功"
+}
+```
+
+**错误响应**
+
+```json
+// 400 Bad Request - 标签名称已存在
+{
+  "error": "标签名称已存在",
+  "code": "TAG_EXISTS"
+}
+
+// 400 Bad Request - 数据验证失败
+{
+  "error": "数据验证失败",
+  "code": "VALIDATION_ERROR",
+  "details": [
+    {
+      "message": "标签名称不能为空",
+      "path": ["name"]
+    }
+  ]
+}
+```
+
+### 7.3 获取单个标签
+
+**端点**: `GET /api/tags/[id]`
+
+**描述**: 获取指定标签的详细信息
+
+**认证**: ✅ 需要
+
+**路径参数**
+
+| 参数 | 类型 | 说明 |
+|-----|------|------|
+| id | string | 标签 ID |
+
+**成功响应** (200 OK)
+
+```json
+{
+  "data": {
+    "id": "tag1",
+    "userId": "user123",
+    "name": "React",
+    "color": "#61dafb",
+    "createdAt": "2025-11-04T10:00:00.000Z",
+    "updatedAt": "2025-11-04T10:00:00.000Z",
+    "_count": {
+      "notes": 10
+    }
+  },
+  "message": "获取标签成功"
+}
+```
+
+**错误响应**
+
+```json
+// 404 Not Found
+{
+  "error": "标签不存在",
+  "code": "TAG_NOT_FOUND"
+}
+
+// 403 Forbidden
+{
+  "error": "无权访问此标签",
+  "code": "FORBIDDEN"
+}
+```
+
+### 7.4 更新标签
+
+**端点**: `PUT /api/tags/[id]`
+
+**描述**: 更新指定标签
+
+**认证**: ✅ 需要
+
+**路径参数**
+
+| 参数 | 类型 | 说明 |
+|-----|------|------|
+| id | string | 标签 ID |
+
+**请求体**
+
+```json
+{
+  "name": "更新后的标签",
+  "color": "#ef4444"
+}
+```
+
+**字段说明**
+
+| 字段 | 类型 | 必填 | 验证规则 | 说明 |
+|-----|------|------|---------|------|
+| name | string | ❌ | 1-50 字符 | 标签名称 |
+| color | string | ❌ | 最大 20 字符 | 颜色代码 |
+
+**成功响应** (200 OK)
+
+```json
+{
+  "data": {
+    "id": "tag1",
+    "userId": "user123",
+    "name": "更新后的标签",
+    "color": "#ef4444",
+    "createdAt": "2025-11-04T10:00:00.000Z",
+    "updatedAt": "2025-11-04T16:00:00.000Z",
+    "_count": {
+      "notes": 10
+    }
+  },
+  "message": "标签更新成功"
+}
+```
+
+### 7.5 删除标签
+
+**端点**: `DELETE /api/tags/[id]`
+
+**描述**: 删除指定标签（会自动解除与笔记的关联）
+
+**认证**: ✅ 需要
+
+**路径参数**
+
+| 参数 | 类型 | 说明 |
+|-----|------|------|
+| id | string | 标签 ID |
+
+**成功响应** (200 OK)
+
+```json
+{
+  "message": "标签删除成功"
+}
+```
+
+**错误响应**
+
+```json
+// 404 Not Found
+{
+  "error": "标签不存在",
+  "code": "TAG_NOT_FOUND"
+}
+```
+
+---
+
+## 8. 错误处理
+
+### 8.1 错误码列表
 
 | 错误码 | HTTP 状态码 | 说明 |
 |--------|------------|------|
 | UNAUTHORIZED | 401 | 未登录或 Token 无效 |
 | FORBIDDEN | 403 | 无权限访问 |
 | NOT_FOUND | 404 | 资源不存在 |
-| VALIDATION_ERROR | 422 | 数据验证失败 |
+| VALIDATION_ERROR | 400/422 | 数据验证失败 |
 | EMAIL_EXISTS | 409 | 邮箱已存在 |
+| NOTEBOOK_EXISTS | 400 | 笔记本名称已存在 |
+| NOTEBOOK_NOT_FOUND | 404 | 笔记本不存在 |
+| NOTEBOOK_NOT_EMPTY | 400 | 笔记本不为空 |
+| TAG_EXISTS | 400 | 标签名称已存在 |
+| TAG_NOT_FOUND | 404 | 标签不存在 |
 | INTERNAL_ERROR | 500 | 服务器内部错误 |
 | RATE_LIMIT_EXCEEDED | 429 | 请求过于频繁 |
 
-### 7.2 错误响应格式
+### 8.2 错误响应格式
 
 ```json
 {
@@ -1226,7 +1802,7 @@ export async function GET(req: NextRequest) {
 }
 ```
 
-### 7.3 错误处理示例
+### 8.3 错误处理示例
 
 **客户端错误处理**
 
@@ -1275,9 +1851,9 @@ async function createNote(title: string, content: string) {
 
 ---
 
-## 8. 速率限制
+## 9. 速率限制
 
-### 8.1 限制策略（未来可实现）
+### 9.1 限制策略（未来可实现）
 
 | API 类型 | 限制 | 时间窗口 |
 |---------|------|---------|
@@ -1285,7 +1861,7 @@ async function createNote(title: string, content: string) {
 | 笔记 CRUD | 100 次 | 1 分钟 |
 | 搜索 | 30 次 | 1 分钟 |
 
-### 8.2 限流响应
+### 9.2 限流响应
 
 **响应头**
 ```
@@ -1307,9 +1883,9 @@ X-RateLimit-Reset: 1699099200
 
 ---
 
-## 9. 测试指南
+## 10. 测试指南
 
-### 9.1 使用 cURL 测试
+### 10.1 使用 cURL 测试
 
 **注册用户**
 
@@ -1342,7 +1918,7 @@ curl -X GET "http://localhost:3000/api/notes?page=1&limit=20" \
   -H "Cookie: next-auth.session-token=..."
 ```
 
-### 9.2 使用 Postman 测试
+### 10.2 使用 Postman 测试
 
 1. 导入 API 文档到 Postman
 2. 设置环境变量：
@@ -1350,7 +1926,7 @@ curl -X GET "http://localhost:3000/api/notes?page=1&limit=20" \
    - `SESSION_TOKEN`: 登录后的 Cookie
 3. 测试各个端点
 
-### 9.3 单元测试示例
+### 10.3 单元测试示例
 
 ```typescript
 // __tests__/api/notes.test.ts
@@ -1402,14 +1978,17 @@ describe("POST /api/notes", () => {
 
 ---
 
-## 10. 版本控制
+## 11. 版本控制
 
-### 10.1 API 版本
+### 11.1 API 版本
 
-- 当前版本: `v1.0`
+- 当前版本: `v1.1`
 - 版本策略: URL 路径暂不包含版本号（后续可添加 `/api/v1/...`）
+- 更新历史：
+  - v1.1 (2025-11-04): 新增笔记本和标签功能
+  - v1.0 (2025-11-04): 初始版本，包含基础笔记功能
 
-### 10.2 版本兼容性
+### 11.2 版本兼容性
 
 - 向后兼容：新增字段不影响现有客户端
 - 废弃策略：提前 3 个月通知，保留 6 个月过渡期
@@ -1417,9 +1996,9 @@ describe("POST /api/notes", () => {
 
 ---
 
-## 11. 最佳实践
+## 12. 最佳实践
 
-### 11.1 客户端最佳实践
+### 12.1 客户端最佳实践
 
 **使用 TypeScript**
 
@@ -1478,7 +2057,7 @@ class ApiClient {
 export const apiClient = new ApiClient();
 ```
 
-### 11.2 服务端最佳实践
+### 12.2 服务端最佳实践
 
 **统一错误处理**
 
@@ -1544,16 +2123,17 @@ export const GET = withAuth(async (req, session) => {
 
 ---
 
-## 12. 总结
+## 13. 总结
 
 本文档详细描述了 Mars-Notes 系统的 API 设计，包括：
 
-✅ **完整的 API 端点**：覆盖认证和笔记管理所有功能  
+✅ **完整的 API 端点**：覆盖认证、笔记、笔记本、标签管理所有功能  
 ✅ **标准的 RESTful 设计**：符合行业最佳实践  
 ✅ **详细的请求响应示例**：便于前端开发对接  
 ✅ **完善的错误处理**：提供友好的错误提示  
 ✅ **实现代码示例**：加速后端开发  
 ✅ **测试指南**：确保 API 质量  
+✅ **笔记本和标签支持**：增强笔记组织能力
 
 **相关文档**
 - [产品需求文档](./PRD.md)

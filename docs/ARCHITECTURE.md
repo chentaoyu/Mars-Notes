@@ -3,8 +3,8 @@
 ## 文档信息
 
 - **项目名称**: Mars-Notes
-- **架构版本**: v1.0
-- **文档版本**: 1.0
+- **架构版本**: v1.1
+- **文档版本**: 1.1
 - **创建日期**: 2025-11-04
 - **最后更新**: 2025-11-04
 
@@ -32,6 +32,7 @@
 │                         用户浏览器                            │
 │  ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌──────────┐ │
 │  │  登录页   │  │  注册页   │  │  笔记列表  │  │ 编辑器页 │ │
+│  │           │  │           │  │ 笔记本列表 │  │ 标签管理 │ │
 │  └───────────┘  └───────────┘  └───────────┘  └──────────┘ │
 └────────────────────────────┬────────────────────────────────┘
                              │ HTTPS
@@ -49,6 +50,8 @@
 │  │              后端层 (API Routes / Route Handlers)     │   │
 │  │  • 认证 API (/api/auth/*)                            │   │
 │  │  • 笔记 API (/api/notes/*)                           │   │
+│  │  • 笔记本 API (/api/notebooks/*)                     │   │
+│  │  • 标签 API (/api/tags/*)                            │   │
 │  │  • 中间件 (认证、错误处理)                            │   │
 │  └──────────────────────────────────────────────────────┘   │
 │                             │                                │
@@ -65,6 +68,9 @@
 │                    PostgreSQL 数据库                          │
 │  • users 表 (用户信息)                                        │
 │  • notes 表 (笔记数据)                                        │
+│  • notebooks 表 (笔记本)                                      │
+│  • tags 表 (标签)                                            │
+│  • note_tags 表 (笔记-标签关联)                               │
 │  • sessions 表 (会话管理)                                     │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -316,12 +322,22 @@ mars-notes/
 │   │   │   │   └── [...nextauth]/
 │   │   │   │       └── route.ts # NextAuth 配置
 │   │   │   │
-│   │   │   └── notes/           # 笔记相关 API
+│   │   │   ├── notes/           # 笔记相关 API
+│   │   │   │   ├── route.ts     # GET 列表, POST 创建
+│   │   │   │   ├── [id]/
+│   │   │   │   │   └── route.ts # GET/PUT/DELETE 单个笔记
+│   │   │   │   └── search/
+│   │   │   │       └── route.ts # GET 搜索
+│   │   │   │
+│   │   │   ├── notebooks/       # 笔记本相关 API
+│   │   │   │   ├── route.ts     # GET 列表, POST 创建
+│   │   │   │   └── [id]/
+│   │   │   │       └── route.ts # GET/PUT/DELETE 单个笔记本
+│   │   │   │
+│   │   │   └── tags/            # 标签相关 API
 │   │   │       ├── route.ts     # GET 列表, POST 创建
-│   │   │       ├── [id]/
-│   │   │       │   └── route.ts # GET/PUT/DELETE 单个笔记
-│   │   │       └── search/
-│   │   │           └── route.ts # GET 搜索
+│   │   │       └── [id]/
+│   │   │           └── route.ts # GET/PUT/DELETE 单个标签
 │   │   │
 │   │   ├── layout.tsx           # 根布局
 │   │   ├── page.tsx             # 首页 (重定向到 /notes)
@@ -349,6 +365,14 @@ mars-notes/
 │   │   │   ├── NoteSearch.tsx   # 搜索框
 │   │   │   └── DeleteDialog.tsx # 删除确认对话框
 │   │   │
+│   │   ├── notebooks/           # 笔记本相关组件
+│   │   │   ├── NotebookList.tsx # 笔记本列表
+│   │   │   └── NotebookDialog.tsx # 笔记本创建/编辑对话框
+│   │   │
+│   │   ├── tags/                # 标签相关组件
+│   │   │   ├── TagList.tsx      # 标签列表
+│   │   │   └── TagSelector.tsx  # 标签选择器
+│   │   │
 │   │   ├── editor/              # 编辑器相关组件
 │   │   │   ├── MarkdownEditor.tsx # Markdown 编辑器
 │   │   │   ├── MarkdownPreview.tsx # Markdown 预览
@@ -370,10 +394,8 @@ mars-notes/
 │   │   └── constants.ts         # 常量定义
 │   │
 │   ├── types/                   # 📝 TypeScript 类型定义
-│   │   ├── index.ts             # 类型导出
-│   │   ├── user.ts              # 用户相关类型
-│   │   ├── note.ts              # 笔记相关类型
-│   │   └── api.ts               # API 相关类型
+│   │   ├── index.ts             # 类型导出（包含所有类型）
+│   │   └── ... (用户、笔记、笔记本、标签等类型定义)
 │   │
 │   ├── hooks/                   # 🪝 自定义 React Hooks
 │   │   ├── useAuth.ts           # 认证相关
@@ -538,31 +560,77 @@ export function LoginForm() {
 
 #### **模块职责**
 - 笔记的 CRUD 操作
-- 笔记列表展示
+- 笔记列表展示（支持按笔记本、标签过滤）
 - 搜索和过滤
+- 笔记本分类管理
+- 标签关联管理
 - 数据持久化
 
 #### **数据模型**
 
-**Note 类型定义** (`src/types/note.ts`)
+**Note 类型定义** (`src/types/index.ts`)
 ```typescript
 export interface Note {
   id: string;
+  userId: string;
+  notebookId?: string | null;
   title: string;
   content: string;
-  userId: string;
   createdAt: Date;
   updatedAt: Date;
+  notebook?: Notebook | null;
+  tags?: Tag[];
+}
+
+export interface Notebook {
+  id: string;
+  userId: string;
+  name: string;
+  description?: string | null;
+  color?: string | null;
+  icon?: string | null;
+  sortOrder: number;
+  createdAt: Date;
+  updatedAt: Date;
+  _count?: {
+    notes: number;
+  };
+}
+
+export interface Tag {
+  id: string;
+  userId: string;
+  name: string;
+  color?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  _count?: {
+    noteTags: number;
+  };
 }
 
 export interface CreateNoteInput {
   title: string;
   content?: string;
+  notebookId?: string;
+  tagIds?: string[];
 }
 
 export interface UpdateNoteInput {
   title?: string;
   content?: string;
+  notebookId?: string | null;
+  tagIds?: string[];
+}
+
+export interface NoteQueryParams {
+  search?: string;
+  notebookId?: string;
+  tagIds?: string[];
+  sortBy?: 'updatedAt' | 'createdAt' | 'title';
+  sortOrder?: 'asc' | 'desc';
+  page?: number;
+  limit?: number;
 }
 ```
 
@@ -855,6 +923,153 @@ export async function GET(req: NextRequest) {
   });
 
   return NextResponse.json(notes);
+}
+```
+
+### 4.5 笔记本管理模块
+
+#### **模块职责**
+- 笔记本的 CRUD 操作
+- 笔记本列表展示和排序
+- 笔记本与笔记的关联管理
+- 笔记数量统计
+
+#### **API 实现示例**
+
+**笔记本列表 API** (`src/app/api/notebooks/route.ts`)
+```typescript
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+
+// GET /api/notebooks - 获取笔记本列表
+export async function GET(request: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "未授权" }, { status: 401 });
+  }
+
+  const notebooks = await prisma.notebook.findMany({
+    where: { userId: session.user.id },
+    include: {
+      _count: {
+        select: { notes: true },
+      },
+    },
+    orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+  });
+
+  return NextResponse.json({ data: notebooks });
+}
+
+// POST /api/notebooks - 创建笔记本
+export async function POST(request: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "未授权" }, { status: 401 });
+  }
+
+  const body = await request.json();
+  const { name, description, color, icon } = body;
+
+  // 获取当前最大的 sortOrder
+  const maxSortOrder = await prisma.notebook.findFirst({
+    where: { userId: session.user.id },
+    orderBy: { sortOrder: "desc" },
+    select: { sortOrder: true },
+  });
+
+  const notebook = await prisma.notebook.create({
+    data: {
+      userId: session.user.id,
+      name,
+      description,
+      color,
+      icon,
+      sortOrder: (maxSortOrder?.sortOrder ?? -1) + 1,
+    },
+    include: {
+      _count: {
+        select: { notes: true },
+      },
+    },
+  });
+
+  return NextResponse.json({ data: notebook }, { status: 201 });
+}
+```
+
+### 4.6 标签管理模块
+
+#### **模块职责**
+- 标签的 CRUD 操作
+- 标签列表展示
+- 标签与笔记的多对多关联
+- 标签使用统计
+
+#### **API 实现示例**
+
+**标签列表 API** (`src/app/api/tags/route.ts`)
+```typescript
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+
+// GET /api/tags - 获取标签列表
+export async function GET(request: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "未授权" }, { status: 401 });
+  }
+
+  const tags = await prisma.tag.findMany({
+    where: { userId: session.user.id },
+    include: {
+      _count: {
+        select: { notes: true },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return NextResponse.json({ data: tags });
+}
+
+// POST /api/tags - 创建标签
+export async function POST(request: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "未授权" }, { status: 401 });
+  }
+
+  const body = await request.json();
+  const { name, color } = body;
+
+  try {
+    const tag = await prisma.tag.create({
+      data: {
+        userId: session.user.id,
+        name,
+        color,
+      },
+      include: {
+        _count: {
+          select: { notes: true },
+        },
+      },
+    });
+
+    return NextResponse.json({ data: tag }, { status: 201 });
+  } catch (error: any) {
+    // 处理唯一性约束错误
+    if (error.code === "P2002") {
+      return NextResponse.json(
+        { error: "标签名称已存在" },
+        { status: 400 }
+      );
+    }
+    throw error;
+  }
 }
 ```
 
@@ -1328,11 +1543,21 @@ export const logger = {
 - 认证方式可扩展（OAuth）
 - 数据库可迁移（MySQL/SQLite）
 
-**模块化开发**
-- 笔记本功能模块
-- 标签系统模块
-- 分享功能模块
-- 协作功能模块
+**已实现的模块**
+- ✅ 用户认证模块（注册、登录、会话管理）
+- ✅ 笔记管理模块（CRUD、搜索、过滤）
+- ✅ 笔记本功能模块（分类管理、排序）
+- ✅ 标签系统模块（多对多关联、统计）
+- ✅ Markdown 编辑器（实时预览、代码高亮）
+- ✅ 自动保存功能
+
+**未来可扩展功能**
+- 🔄 笔记分享功能（公开链接、权限控制）
+- 🔄 多人协作功能（实时编辑、冲突解决）
+- 🔄 附件上传功能（图片、文件）
+- 🔄 笔记导出功能（PDF、HTML、Markdown）
+- 🔄 笔记模板功能
+- 🔄 AI 辅助功能（自动摘要、标签推荐）
 
 ---
 
@@ -1379,7 +1604,7 @@ chore: 构建工具或辅助工具变动
 
 ## 12. 总结
 
-本文档详细描述了 Mars-Notes 系统的技术架构设计，涵盖了从前端到后端、从开发到部署的各个方面。
+本文档详细描述了 Mars-Notes 系统的技术架构设计（v1.1），涵盖了从前端到后端、从开发到部署的各个方面。
 
 **核心优势**
 - ✅ 前后端一体化，简化开发和部署
@@ -1387,17 +1612,38 @@ chore: 构建工具或辅助工具变动
 - ✅ 性能优化，提供流畅体验
 - ✅ 安全可靠，保护用户数据
 - ✅ 易于扩展，支持持续迭代
+- ✅ 模块化设计，功能清晰独立
+
+**当前功能状态 (v1.1)**
+- ✅ 用户认证系统
+- ✅ 笔记 CRUD 完整功能
+- ✅ 笔记本分类管理
+- ✅ 标签系统
+- ✅ 高级搜索和过滤
+- ✅ Markdown 编辑器
+- ✅ 自动保存
+
+**技术栈总览**
+- **前端**: Next.js 14 + React 18 + TypeScript + Tailwind CSS
+- **后端**: Next.js API Routes + NextAuth.js v5
+- **数据库**: PostgreSQL + Prisma ORM
+- **部署**: Vercel (推荐) / Docker
 
 **下一步**
 请参考其他文档继续了解：
-- [数据库设计](./DATABASE.md)
-- [API 接口文档](./API.md)
-- [部署指南](./DEPLOYMENT.md)
+- [数据库设计](./DATABASE.md) - 详细的数据模型和关系设计
+- [API 接口文档](./API.md) - 完整的 API 端点和使用说明
+- [部署指南](./DEPLOYMENT.md) - 生产环境部署流程
 
 ---
+
+**更新历史**
+- **v1.1** (2025-11-04): 新增笔记本和标签功能
+- **v1.0** (2025-11-04): 初始版本，包含基础笔记功能
 
 **文档维护**
 - 本文档随技术栈升级持续更新
 - 重大架构变更需同步更新文档
 - 所有开发者都应熟悉本文档
+- 新功能开发前需评估架构影响
 
