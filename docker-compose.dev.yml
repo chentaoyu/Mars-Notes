@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  # ========================================
+  # PostgreSQL 数据库（开发环境）
+  # ========================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: notebook-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-notebook}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-notebook_password}
+      POSTGRES_DB: ${POSTGRES_DB:-notebook_dev}
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    networks:
+      - notebook-dev-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-notebook}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ========================================
+  # Next.js 应用（开发环境）
+  # ========================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: notebook-app-dev
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://${POSTGRES_USER:-notebook}:${POSTGRES_PASSWORD:-notebook_password}@postgres:5432/${POSTGRES_DB:-notebook_dev}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-dev-secret-key-change-in-production}
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    volumes:
+      # 挂载源代码，实现热重载
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./prisma:/app/prisma
+      - ./next.config.js:/app/next.config.js
+      - ./tailwind.config.ts:/app/tailwind.config.ts
+      - ./tsconfig.json:/app/tsconfig.json
+      - ./postcss.config.js:/app/postcss.config.js
+      # 排除 node_modules 和 .next
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - notebook-dev-network
+    command: >
+      sh -c "
+        echo '等待数据库准备就绪...' &&
+        pnpm prisma generate &&
+        pnpm prisma migrate deploy &&
+        echo '数据库迁移完成，启动开发服务器...' &&
+        pnpm dev
+      "
+
+# ========================================
+# 网络
+# ========================================
+networks:
+  notebook-dev-network:
+    driver: bridge
+
+# ========================================
+# 数据卷
+# ========================================
+volumes:
+  postgres_dev_data:
+    driver: local
+

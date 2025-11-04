@@ -3,6 +3,9 @@ const nextConfig = {
   // 启用 SWC 编译器
   swcMinify: true,
 
+  // 输出模式（Docker 部署需要）
+  output: "standalone",
+
   // 实验性功能
   experimental: {
     serverActions: {

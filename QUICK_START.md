@@ -8,6 +8,97 @@
 
 ## 📋 下一步操作
 
+### 选择启动方式
+
+你可以选择以下两种方式之一来启动项目：
+
+- **方式 A：Docker 快速启动（推荐）** - 无需配置本地数据库，一键启动
+- **方式 B：本地开发环境** - 完全自定义的本地开发环境
+
+---
+
+## 🐳 方式 A：Docker 快速启动（推荐）
+
+### 1. 确保已安装 Docker
+
+```bash
+# 检查 Docker 版本
+docker --version
+docker-compose --version
+```
+
+如果未安装，请访问：
+- macOS/Windows: [Docker Desktop](https://www.docker.com/products/docker-desktop)
+- Linux: [Docker Engine](https://docs.docker.com/engine/install/)
+
+### 2. 配置环境变量
+
+```bash
+# 复制环境变量示例文件
+cp .env.example .env
+
+# 生成安全的密钥
+openssl rand -base64 32
+```
+
+编辑 `.env` 文件，至少修改以下内容：
+
+```env
+POSTGRES_PASSWORD=your-secure-password-here
+NEXTAUTH_SECRET=paste-generated-key-here
+```
+
+### 3. 启动开发环境
+
+```bash
+# 使用管理脚本（推荐）
+./docker.sh dev:up
+
+# 或使用 pnpm 脚本
+pnpm docker:dev
+
+# 或直接使用 docker-compose
+docker-compose -f docker-compose.dev.yml up -d
+```
+
+### 4. 查看日志
+
+```bash
+./docker.sh dev:logs
+```
+
+### 5. 访问应用
+
+- 应用地址: http://localhost:3000
+- 数据库端口: 5432
+
+### Docker 常用命令
+
+```bash
+# 停止环境
+./docker.sh dev:down
+
+# 重启环境
+./docker.sh dev:restart
+
+# 查看容器状态
+./docker.sh ps
+
+# 数据库操作
+./docker.sh db:migrate    # 执行迁移
+./docker.sh db:backup     # 备份数据库
+./docker.sh db:studio     # 打开 Prisma Studio
+
+# 查看所有命令
+./docker.sh help
+```
+
+**跳到 [功能测试](#-功能测试) 部分开始使用！**
+
+---
+
+## 💻 方式 B：本地开发环境
+
 ### 1. 安装依赖
 
 ```bash
@@ -126,25 +217,44 @@ npm run dev
 
 ## 🛠️ 开发命令
 
+### 本地开发命令
+
 ```bash
 # 开发
-npm run dev              # 启动开发服务器
+pnpm dev                 # 启动开发服务器
 
 # 构建
-npm run build            # 构建生产版本
-npm start                # 启动生产服务器
+pnpm build               # 构建生产版本
+pnpm start               # 启动生产服务器
 
 # 代码质量
-npm run lint             # 代码检查
-npm run format           # 代码格式化
-npm run type-check       # 类型检查
+pnpm lint                # 代码检查
+pnpm format              # 代码格式化
+pnpm type-check          # 类型检查
 
 # 数据库
-npm run db:push          # 推送 schema 到数据库（快速原型）
-npm run db:studio        # 打开 Prisma Studio
-npm run db:generate      # 生成 Prisma Client
-npm run db:migrate       # 创建迁移
-npm run db:reset         # 重置数据库（危险！）
+pnpm db:push             # 推送 schema 到数据库（快速原型）
+pnpm db:studio           # 打开 Prisma Studio
+pnpm db:generate         # 生成 Prisma Client
+pnpm db:migrate          # 创建迁移
+pnpm db:reset            # 重置数据库（危险！）
+```
+
+### Docker 命令
+
+```bash
+# 开发环境
+pnpm docker:dev          # 启动开发环境
+pnpm docker:dev:down     # 停止开发环境
+pnpm docker:dev:logs     # 查看日志
+
+# 生产环境
+pnpm docker:prod         # 启动生产环境
+pnpm docker:prod:down    # 停止生产环境
+pnpm docker:prod:logs    # 查看日志
+
+# 管理脚本（功能更全）
+./docker.sh help         # 查看所有 Docker 命令
 ```
 
 ---
@@ -265,12 +375,29 @@ PORT=3001 npm run dev
 - [数据库设计](./docs/DATABASE.md) - 数据模型和 Schema
 - [API 设计文档](./docs/API.md) - 接口说明和示例
 - [部署指南](./docs/DEPLOYMENT.md) - 生产部署和运维
+- [Docker 部署指南](./DOCKER.md) - Docker 容器化部署完整指南
 
 ---
 
 ## 🚢 生产部署
 
-### Vercel 部署（推荐）
+### Docker 部署（推荐）
+
+```bash
+# 1. 配置生产环境变量
+cp .env.example .env
+# 编辑 .env，设置生产配置
+
+# 2. 启动生产环境
+./docker.sh prod:up
+
+# 3. 查看日志
+./docker.sh prod:logs
+```
+
+详见：[Docker 部署指南](./DOCKER.md)
+
+### Vercel 部署
 
 1. 推送代码到 GitHub
 2. 在 Vercel 导入项目

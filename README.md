@@ -71,6 +71,7 @@ npm run dev
 | **数据库设计** | ER 图、表结构、Prisma Schema | [DATABASE.md](./docs/DATABASE.md) |
 | **API 设计文档** | RESTful API 接口说明 | [API.md](./docs/API.md) |
 | **部署指南** | 本地开发、生产部署、运维 | [DEPLOYMENT.md](./docs/DEPLOYMENT.md) |
+| **Docker 部署指南** | Docker 容器化部署完整指南 | [DOCKER.md](./DOCKER.md) |
 
 ---
 
@@ -94,6 +95,7 @@ npm run dev
 - **语言**: TypeScript
 - **代码规范**: ESLint + Prettier
 - **版本控制**: Git
+- **容器化**: Docker + Docker Compose
 
 ---
 
@@ -221,15 +223,45 @@ git push origin main
 # 4. 自动部署完成
 ```
 
-### Docker 部署
+### Docker 部署（推荐）
+
+#### 使用管理脚本（最简单）
 
 ```bash
-# 构建和启动
+# 1. 配置环境变量
+cp .env.example .env
+# 编辑 .env 文件，配置数据库密码和 NextAuth 密钥
+
+# 2. 开发环境（支持热重载）
+./docker.sh dev:up
+
+# 3. 生产环境
+./docker.sh prod:up
+
+# 查看日志
+./docker.sh logs
+
+# 查看所有命令
+./docker.sh help
+```
+
+#### 使用 Docker Compose
+
+```bash
+# 开发环境
+docker-compose -f docker-compose.dev.yml up -d
+
+# 生产环境
 docker-compose up -d
 
 # 运行迁移
 docker-compose exec app npx prisma migrate deploy
+
+# 查看日志
+docker-compose logs -f
 ```
+
+**详细的 Docker 部署指南请参考：[DOCKER.md](./DOCKER.md)**
 
 ### VPS 部署
 
@@ -276,6 +308,8 @@ openssl rand -base64 32
 
 ## 📝 开发命令
 
+### 本地开发
+
 ```bash
 # 开发
 npm run dev              # 启动开发服务器
@@ -291,6 +325,30 @@ npm run type-check       # 类型检查
 npx prisma studio        # 数据库可视化
 npx prisma migrate dev   # 创建迁移
 npx prisma generate      # 生成 Prisma Client
+```
+
+### Docker 命令
+
+```bash
+# 开发环境
+./docker.sh dev:up       # 启动开发环境
+./docker.sh dev:down     # 停止开发环境
+./docker.sh dev:logs     # 查看日志
+
+# 生产环境
+./docker.sh prod:up      # 启动生产环境
+./docker.sh prod:down    # 停止生产环境
+./docker.sh prod:logs    # 查看日志
+
+# 数据库
+./docker.sh db:migrate   # 执行数据库迁移
+./docker.sh db:backup    # 备份数据库
+./docker.sh db:studio    # 打开 Prisma Studio
+
+# 工具
+./docker.sh ps           # 查看容器状态
+./docker.sh clean        # 清理容器
+./docker.sh help         # 查看所有命令
 ```
 
 ---
