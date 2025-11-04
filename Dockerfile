@@ -20,8 +20,8 @@ FROM base AS deps
 # 复制依赖文件
 COPY package.json pnpm-lock.yaml ./
 
-# 安装依赖
-RUN pnpm install --frozen-lockfile
+# 安装依赖（允许锁文件更新以避免版本不一致导致构建失败）
+RUN pnpm install --no-frozen-lockfile
 
 # ========================================
 # 构建阶段

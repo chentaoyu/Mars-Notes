@@ -60,8 +60,20 @@ services:
     command: >
       sh -c "
         echo '等待数据库准备就绪...' &&
+        if [ ! -d node_modules ] || [ -z "$(ls -A node_modules 2>/dev/null || true)" ]; then \
+          echo 'node_modules 为空，执行 pnpm install...'; \
+          pnpm install; \
+        else \
+          echo '检测到现有依赖，跳过安装'; \
+        fi &&
         pnpm prisma generate &&
-        pnpm prisma migrate deploy &&
+        if [ -d prisma/migrations ] && [ "$(ls -A prisma/migrations)" ]; then \
+          echo '检测到迁移文件，执行 migrate deploy...'; \
+          pnpm prisma migrate deploy; \
+        else \
+          echo '未检测到迁移文件，执行 db push 同步 schema...'; \
+          pnpm prisma db push; \
+        fi &&
         echo '数据库迁移完成，启动开发服务器...' &&
         pnpm dev
       "
