@@ -677,13 +677,15 @@ export async function GET(req: NextRequest) {
 }
 ```
 
+**注意**: `notebookId` 可以为 `null` 或不传该字段，表示创建不指定笔记本的笔记。如果传入空字符串，会自动转换为 `null`。
+
 **字段说明**
 
 | 字段 | 类型 | 必填 | 验证规则 | 说明 |
 |-----|------|------|---------|------|
 | title | string | ✅ | 1-200 字符 | 笔记标题 |
 | content | string | ❌ | 最大 100,000 字符 | 笔记内容（Markdown） |
-| notebookId | string | ❌ | - | 所属笔记本ID |
+| notebookId | string \| null | ❌ | - | 所属笔记本ID（可为 null，表示不指定笔记本） |
 | tagIds | string[] | ❌ | - | 标签ID数组 |
 
 **成功响应** (201 Created)
@@ -755,7 +757,13 @@ export async function POST(req: NextRequest) {
     // 验证数据
     const noteSchema = z.object({
       title: z.string().min(1, "标题不能为空").max(200, "标题最多 200 字符"),
-      content: z.string().max(100000, "内容过长").optional().default(""),
+      content: z.string().max(100000, "内容过长").default(""),
+      notebookId: z
+        .string()
+        .optional()
+        .nullable()
+        .transform((val) => (val && typeof val === "string" && val.trim() !== "" ? val : null)),
+      tagIds: z.array(z.string()).optional(),
     });
 
     const result = noteSchema.safeParse(body);
@@ -770,14 +778,37 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { title, content } = result.data;
+    const { title, content, notebookId, tagIds } = result.data;
 
     // 创建笔记
     const note = await prisma.note.create({
       data: {
         title,
-        content,
+        content: content || "",
         userId: session.user.id,
+        notebookId: notebookId ?? null,
+        noteTags: tagIds
+          ? {
+              create: tagIds.map((tagId: string) => ({
+                tagId,
+              })),
+            }
+          : undefined,
+      },
+      include: {
+        notebook: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+            icon: true,
+          },
+        },
+        noteTags: {
+          include: {
+            tag: true,
+          },
+        },
       },
     });
 
@@ -932,7 +963,7 @@ export async function GET(
 |-----|------|------|---------|------|
 | title | string | ❌ | 1-200 字符 | 笔记标题 |
 | content | string | ❌ | 最大 100,000 字符 | 笔记内容 |
-| notebookId | string | ❌ | - | 所属笔记本ID |
+| notebookId | string \| null | ❌ | - | 所属笔记本ID（可为 null，表示移除笔记本关联） |
 | tagIds | string[] | ❌ | - | 标签ID数组（会完全替换现有标签） |
 
 **成功响应** (200 OK)

@@ -612,7 +612,7 @@ export interface Tag {
 export interface CreateNoteInput {
   title: string;
   content?: string;
-  notebookId?: string;
+  notebookId?: string | null;
   tagIds?: string[];
 }
 

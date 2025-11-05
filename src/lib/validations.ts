@@ -19,7 +19,11 @@ export const loginSchema = z.object({
 export const createNoteSchema = z.object({
   title: z.string().min(1, "标题不能为空").max(200, "标题最多 200 字符"),
   content: z.string().max(100000, "内容过长").default(""),
-  notebookId: z.string().optional(),
+  notebookId: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((val) => (val && typeof val === "string" && val.trim() !== "" ? val : null)),
   tagIds: z.array(z.string()).optional(),
 });
 

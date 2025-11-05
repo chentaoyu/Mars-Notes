@@ -137,7 +137,7 @@ export async function POST(req: NextRequest) {
         title,
         content: content || "",
         userId: session.user.id,
-        notebookId: notebookId || null,
+        notebookId: notebookId ?? null,
         noteTags: tagIds
           ? {
               create: tagIds.map((tagId: string) => ({
@@ -179,4 +179,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-
