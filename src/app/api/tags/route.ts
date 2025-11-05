@@ -49,6 +49,17 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = session.user.id;
+
+    // 验证用户是否存在
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "用户不存在", code: "USER_NOT_FOUND" }, { status: 404 });
+    }
+
     const body = await request.json();
 
     // 验证请求数据
@@ -92,6 +103,13 @@ export async function POST(request: NextRequest) {
       // 检查是否为唯一性约束错误
       if (error.code === "P2002") {
         return NextResponse.json({ error: "标签名称已存在", code: "TAG_EXISTS" }, { status: 400 });
+      }
+      // 检查是否为外键约束错误
+      if (error.code === "P2003") {
+        return NextResponse.json(
+          { error: "用户不存在，请先登录", code: "USER_NOT_FOUND" },
+          { status: 404 }
+        );
       }
       throw error;
     }

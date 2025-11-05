@@ -18,6 +18,7 @@ export function Header() {
         body: JSON.stringify({
           title: "未命名笔记",
           content: "",
+          notebookId: "",
         }),
       });
 

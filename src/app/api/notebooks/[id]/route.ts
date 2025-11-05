@@ -13,7 +13,7 @@ const updateNotebookSchema = z.object({
 });
 
 // GET /api/notebooks/[id] - 获取单个笔记本
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     }
 
     const userId = session.user.id;
-    const notebookId = params.id;
+    const { id: notebookId } = await params;
 
     const notebook = await prisma.notebook.findUnique({
       where: { id: notebookId },
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 // PUT /api/notebooks/[id] - 更新笔记本
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -63,7 +63,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
 
     const userId = session.user.id;
-    const notebookId = params.id;
+    const { id: notebookId } = await params;
 
     // 验证笔记本存在且属于当前用户
     const existingNotebook = await prisma.notebook.findUnique({
@@ -144,7 +144,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 }
 
 // DELETE /api/notebooks/[id] - 删除笔记本
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -152,7 +155,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
 
     const userId = session.user.id;
-    const notebookId = params.id;
+    const { id: notebookId } = await params;
 
     // 验证笔记本存在且属于当前用户
     const notebook = await prisma.notebook.findUnique({

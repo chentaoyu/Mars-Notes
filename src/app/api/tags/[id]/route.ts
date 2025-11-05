@@ -10,7 +10,7 @@ const updateTagSchema = z.object({
 });
 
 // GET /api/tags/[id] - 获取单个标签
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     }
 
     const userId = session.user.id;
-    const tagId = params.id;
+    const { id: tagId } = await params;
 
     const tag = await prisma.tag.findUnique({
       where: { id: tagId },
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 // PUT /api/tags/[id] - 更新标签
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -57,7 +57,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
 
     const userId = session.user.id;
-    const tagId = params.id;
+    const { id: tagId } = await params;
 
     // 验证标签存在且属于当前用户
     const existingTag = await prisma.tag.findUnique({
@@ -122,7 +122,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 }
 
 // DELETE /api/tags/[id] - 删除标签
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -130,7 +133,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
 
     const userId = session.user.id;
-    const tagId = params.id;
+    const { id: tagId } = await params;
 
     // 验证标签存在且属于当前用户
     const tag = await prisma.tag.findUnique({

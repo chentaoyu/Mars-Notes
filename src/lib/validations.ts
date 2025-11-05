@@ -18,7 +18,7 @@ export const loginSchema = z.object({
 // 笔记验证
 export const createNoteSchema = z.object({
   title: z.string().min(1, "标题不能为空").max(200, "标题最多 200 字符"),
-  content: z.string().max(100000, "内容过长").optional().default(""),
+  content: z.string().max(100000, "内容过长").default(""),
   notebookId: z.string().optional(),
   tagIds: z.array(z.string()).optional(),
 });
