@@ -27,40 +27,10 @@ export function SortSelector({ sortBy, sortOrder, onSortChange }: SortSelectorPr
     onSortChange(newSortBy, newSortOrder);
   };
 
-  const getSortIcon = () => {
-    if (sortBy === "title") {
-      return sortOrder === "asc" ? (
-        <ArrowDownAZ className="h-3 w-3 sm:h-4 sm:w-4" />
-      ) : (
-        <ArrowUpAZ className="h-3 w-3 sm:h-4 sm:w-4" />
-      );
-    }
-    return sortOrder === "desc" ? (
-      <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
-    ) : (
-      <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
-    );
-  };
-
-  const getSortLabel = () => {
-    const labels: Record<string, string> = {
-      "updatedAt-desc": "最近更新",
-      "updatedAt-asc": "最早更新",
-      "createdAt-desc": "最新创建",
-      "createdAt-asc": "最早创建",
-      "title-asc": "标题 A-Z",
-      "title-desc": "标题 Z-A",
-    };
-    return labels[currentValue] || "排序";
-  };
-
   return (
     <Select value={currentValue} onValueChange={handleValueChange}>
       <SelectTrigger className="w-full sm:w-[180px]">
-        <div className="flex items-center gap-1 sm:gap-2">
-          {getSortIcon()}
-          <SelectValue placeholder="选择排序方式" />
-        </div>
+        <SelectValue placeholder="选择排序方式" />
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>

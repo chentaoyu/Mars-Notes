@@ -3,10 +3,10 @@
 ## 文档信息
 
 - **项目名称**: Mars-Notes
-- **API 版本**: v1.1
-- **文档版本**: 1.1
+- **API 版本**: v1.2
+- **文档版本**: 1.2
 - **创建日期**: 2025-11-04
-- **最后更新**: 2025-11-04
+- **最后更新**: 2025-01-27
 - **Base URL**: `https://your-domain.com/api`
 
 ---
@@ -20,9 +20,10 @@
 5. [笔记 API](#5-笔记-api)
 6. [笔记本 API](#6-笔记本-api)
 7. [标签 API](#7-标签-api)
-8. [错误处理](#8-错误处理)
-9. [速率限制](#9-速率限制)
-10. [测试指南](#10-测试指南)
+8. [用户管理 API](#8-用户管理-api)
+9. [错误处理](#9-错误处理)
+10. [速率限制](#10-速率限制)
+11. [测试指南](#11-测试指南)
 
 ---
 
@@ -40,6 +41,7 @@
 │         Next.js API Routes              │
 │  /api/auth/*  |  /api/notes/*          │
 │  /api/notebooks/*  |  /api/tags/*      │
+│  /api/user/*  |  (用户管理)            │
 └────────────────┬────────────────────────┘
                  │
          ┌───────┴───────┐
@@ -87,6 +89,13 @@
 | | `/api/tags/[id]` | GET | ✅ | 获取单个标签 |
 | | `/api/tags/[id]` | PUT | ✅ | 更新标签 |
 | | `/api/tags/[id]` | DELETE | ✅ | 删除标签 |
+| **用户管理** |
+| | `/api/user/name` | PUT | ✅ | 修改昵称 |
+| | `/api/user/password` | PUT | ✅ | 修改密码 |
+| | `/api/user/avatar` | PUT | ✅ | 更新头像 |
+| | `/api/user/avatar` | DELETE | ✅ | 删除头像 |
+| | `/api/user/upload` | POST | ✅ | 上传头像文件 |
+| | `/api/user/delete` | DELETE | ✅ | 注销账户 |
 
 ---
 
@@ -1801,9 +1810,279 @@ export async function GET(req: NextRequest) {
 
 ---
 
-## 8. 错误处理
+## 8. 用户管理 API
 
-### 8.1 错误码列表
+### 8.1 修改昵称
+
+**端点**: `PUT /api/user/name`
+
+**描述**: 修改当前用户的昵称
+
+**认证**: ✅ 需要
+
+**请求体**
+
+```json
+{
+  "name": "新昵称"
+}
+```
+
+**字段说明**
+
+| 字段 | 类型 | 必填 | 验证规则 | 说明 |
+|-----|------|------|---------|------|
+| name | string | ✅ | 1-20 字符 | 用户昵称 |
+
+**成功响应** (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "昵称修改成功",
+  "user": {
+    "id": "user123",
+    "email": "user@example.com",
+    "name": "新昵称",
+    "image": null
+  }
+}
+```
+
+**错误响应**
+
+```json
+// 422 Unprocessable Entity - 数据验证失败
+{
+  "error": "验证失败",
+  "message": "昵称最多 20 字符",
+  "code": "VALIDATION_ERROR"
+}
+```
+
+### 8.2 修改密码
+
+**端点**: `PUT /api/user/password`
+
+**描述**: 修改当前用户的登录密码
+
+**认证**: ✅ 需要
+
+**请求体**
+
+```json
+{
+  "currentPassword": "旧密码123",
+  "newPassword": "新密码456",
+  "confirmPassword": "新密码456"
+}
+```
+
+**字段说明**
+
+| 字段 | 类型 | 必填 | 验证规则 | 说明 |
+|-----|------|------|---------|------|
+| currentPassword | string | ✅ | 不能为空 | 当前密码 |
+| newPassword | string | ✅ | 至少 8 位，包含字母和数字 | 新密码 |
+| confirmPassword | string | ✅ | 必须与新密码一致 | 确认新密码 |
+
+**成功响应** (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "密码修改成功，请重新登录"
+}
+```
+
+**错误响应**
+
+```json
+// 401 Unauthorized - 当前密码错误
+{
+  "error": "当前密码错误",
+  "code": "INVALID_PASSWORD"
+}
+
+// 422 Unprocessable Entity - 数据验证失败
+{
+  "error": "验证失败",
+  "message": "两次输入的密码不一致",
+  "code": "VALIDATION_ERROR"
+}
+```
+
+### 8.3 更新头像
+
+**端点**: `PUT /api/user/avatar`
+
+**描述**: 更新当前用户的头像URL
+
+**认证**: ✅ 需要
+
+**请求体**
+
+```json
+{
+  "image": "/uploads/avatars/user123-1699099200000.jpg"
+}
+```
+
+**字段说明**
+
+| 字段 | 类型 | 必填 | 验证规则 | 说明 |
+|-----|------|------|---------|------|
+| image | string | ✅ | 有效的URL | 头像URL |
+
+**成功响应** (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "头像更新成功",
+  "user": {
+    "id": "user123",
+    "email": "user@example.com",
+    "name": "用户",
+    "image": "/uploads/avatars/user123-1699099200000.jpg"
+  }
+}
+```
+
+### 8.4 删除头像
+
+**端点**: `DELETE /api/user/avatar`
+
+**描述**: 删除当前用户的头像（恢复默认头像）
+
+**认证**: ✅ 需要
+
+**成功响应** (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "头像已删除",
+  "user": {
+    "id": "user123",
+    "email": "user@example.com",
+    "name": "用户",
+    "image": null
+  }
+}
+```
+
+### 8.5 上传头像文件
+
+**端点**: `POST /api/user/upload`
+
+**描述**: 上传头像文件到服务器
+
+**认证**: ✅ 需要
+
+**请求体** (FormData)
+
+```
+Content-Type: multipart/form-data
+
+file: [二进制文件]
+```
+
+**文件限制**
+
+| 限制项 | 说明 |
+|--------|------|
+| 文件类型 | JPG、PNG、GIF |
+| 文件大小 | 最大 2MB |
+| 文件格式 | 图片格式 |
+
+**成功响应** (200 OK)
+
+```json
+{
+  "success": true,
+  "url": "/uploads/avatars/user123-1699099200000.jpg",
+  "message": "头像上传成功"
+}
+```
+
+**错误响应**
+
+```json
+// 422 Unprocessable Entity - 文件验证失败
+{
+  "error": "仅支持 JPG、PNG、GIF 格式的图片",
+  "code": "VALIDATION_ERROR"
+}
+
+{
+  "error": "图片大小不能超过 2MB",
+  "code": "VALIDATION_ERROR"
+}
+```
+
+### 8.6 注销账户
+
+**端点**: `DELETE /api/user/delete`
+
+**描述**: 注销当前用户账户（永久删除所有数据）
+
+**认证**: ✅ 需要
+
+**请求体**
+
+```json
+{
+  "password": "用户密码"
+}
+```
+
+**字段说明**
+
+| 字段 | 类型 | 必填 | 验证规则 | 说明 |
+|-----|------|------|---------|------|
+| password | string | ✅ | 不能为空 | 用户密码（用于确认操作） |
+
+**成功响应** (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "账户已注销"
+}
+```
+
+**错误响应**
+
+```json
+// 401 Unauthorized - 密码错误
+{
+  "error": "密码错误",
+  "code": "INVALID_PASSWORD"
+}
+
+// 404 Not Found - 用户不存在
+{
+  "error": "用户不存在",
+  "code": "USER_NOT_FOUND"
+}
+```
+
+**注意事项**
+
+- 注销账户后，所有数据将被永久删除，包括：
+  - 所有笔记
+  - 所有笔记本
+  - 所有标签
+  - 个人设置
+- 此操作**无法撤销**，请谨慎操作
+- 注销后需要密码验证，防止误操作
+
+---
+
+## 9. 错误处理
+
+### 9.1 错误码列表
 
 | 错误码 | HTTP 状态码 | 说明 |
 |--------|------------|------|
@@ -1817,10 +2096,12 @@ export async function GET(req: NextRequest) {
 | NOTEBOOK_NOT_EMPTY | 400 | 笔记本不为空 |
 | TAG_EXISTS | 400 | 标签名称已存在 |
 | TAG_NOT_FOUND | 404 | 标签不存在 |
+| USER_NOT_FOUND | 404 | 用户不存在 |
+| INVALID_PASSWORD | 401 | 密码错误 |
 | INTERNAL_ERROR | 500 | 服务器内部错误 |
 | RATE_LIMIT_EXCEEDED | 429 | 请求过于频繁 |
 
-### 8.2 错误响应格式
+### 9.2 错误响应格式
 
 ```json
 {
@@ -1833,7 +2114,7 @@ export async function GET(req: NextRequest) {
 }
 ```
 
-### 8.3 错误处理示例
+### 9.3 错误处理示例
 
 **客户端错误处理**
 
@@ -1882,9 +2163,9 @@ async function createNote(title: string, content: string) {
 
 ---
 
-## 9. 速率限制
+## 10. 速率限制
 
-### 9.1 限制策略（未来可实现）
+### 10.1 限制策略（未来可实现）
 
 | API 类型 | 限制 | 时间窗口 |
 |---------|------|---------|
@@ -1892,7 +2173,7 @@ async function createNote(title: string, content: string) {
 | 笔记 CRUD | 100 次 | 1 分钟 |
 | 搜索 | 30 次 | 1 分钟 |
 
-### 9.2 限流响应
+### 10.2 限流响应
 
 **响应头**
 ```
@@ -1914,9 +2195,9 @@ X-RateLimit-Reset: 1699099200
 
 ---
 
-## 10. 测试指南
+## 11. 测试指南
 
-### 10.1 使用 cURL 测试
+### 11.1 使用 cURL 测试
 
 **注册用户**
 
@@ -2013,9 +2294,10 @@ describe("POST /api/notes", () => {
 
 ### 11.1 API 版本
 
-- 当前版本: `v1.1`
+- 当前版本: `v1.2`
 - 版本策略: URL 路径暂不包含版本号（后续可添加 `/api/v1/...`）
 - 更新历史：
+  - v1.2 (2025-01-27): 新增用户管理功能（我的页面）
   - v1.1 (2025-11-04): 新增笔记本和标签功能
   - v1.0 (2025-11-04): 初始版本，包含基础笔记功能
 

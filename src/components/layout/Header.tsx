@@ -1,35 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, LogOut, User } from "lucide-react";
+import { LogOut, User, Settings } from "lucide-react";
 
 export function Header() {
-  const router = useRouter();
   const { data: session } = useSession();
-
-  const handleNewNote = async () => {
-    try {
-      const response = await fetch("/api/notes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: "未命名笔记",
-          content: "",
-          notebookId: "",
-        }),
-      });
-
-      if (response.ok) {
-        const note = await response.json();
-        router.push(`/editor/${note.id}`);
-      }
-    } catch (error) {
-      console.error("创建笔记失败:", error);
-    }
-  };
 
   const handleLogout = async () => {
     await signOut({ redirect: true, callbackUrl: "/login" });
@@ -43,25 +20,29 @@ export function Header() {
         </Link>
 
         <div className="flex items-center gap-1 sm:gap-2">
-          <Button onClick={handleNewNote} size="sm" className="text-xs sm:text-sm">
-            <PlusCircle className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
-            <span className="hidden sm:inline">新建笔记</span>
-          </Button>
-
-          <div className="flex items-center gap-1 sm:gap-2 ml-2 sm:ml-4 pl-2 sm:pl-4 border-l">
-            <div className="hidden md:flex items-center gap-2">
-              <User className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">{session?.user?.name || "用户"}</span>
-            </div>
+          <div className="hidden md:flex items-center gap-2">
+            <User className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">{session?.user?.name || "用户"}</span>
+          </div>
+          <Link href="/profile">
             <Button
               variant="ghost"
               size="sm"
-              onClick={handleLogout}
               className="h-8 w-8 sm:h-9 sm:w-9 p-0"
+              title="我的页面"
             >
-              <LogOut className="h-3 w-3 sm:h-4 sm:w-4" />
+              <Settings className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
-          </div>
+          </Link>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleLogout}
+            className="h-8 w-8 sm:h-9 sm:w-9 p-0"
+            title="退出登录"
+          >
+            <LogOut className="h-3 w-3 sm:h-4 sm:w-4" />
+          </Button>
         </div>
       </div>
     </header>

@@ -36,8 +36,24 @@ export const updateNoteSchema = z.object({
 
 // 用户验证
 export const updateUserSchema = z.object({
-  name: z.string().min(1).max(50).optional(),
-  image: z.string().url().optional(),
+  name: z.string().min(1, "昵称不能为空").max(20, "昵称最多 20 字符").optional(),
+  image: z.string().url("请输入有效的图片URL").optional(),
+});
+
+export const updatePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "当前密码不能为空"),
+  newPassword: z
+    .string()
+    .min(8, "密码至少 8 位")
+    .regex(/^(?=.*[A-Za-z])(?=.*\d)/, "密码必须包含字母和数字"),
+  confirmPassword: z.string().min(1, "确认密码不能为空"),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "两次输入的密码不一致",
+  path: ["confirmPassword"],
+});
+
+export const deleteAccountSchema = z.object({
+  password: z.string().min(1, "请输入密码确认"),
 });
 
 // 类型导出
@@ -46,4 +62,6 @@ export type LoginInput = z.infer<typeof loginSchema>;
 export type CreateNoteInput = z.infer<typeof createNoteSchema>;
 export type UpdateNoteInput = z.infer<typeof updateNoteSchema>;
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
+export type UpdatePasswordInput = z.infer<typeof updatePasswordSchema>;
+export type DeleteAccountInput = z.infer<typeof deleteAccountSchema>;
 

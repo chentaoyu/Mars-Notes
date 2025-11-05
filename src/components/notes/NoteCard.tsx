@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { formatRelativeTime, truncate } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,8 +13,17 @@ interface NoteCardProps {
 }
 
 export function NoteCard({ note, onDelete }: NoteCardProps) {
+  const [relativeTime, setRelativeTime] = useState<string>("");
+  const [mounted, setMounted] = useState(false);
+
   // 提取内容的前100个字符作为摘要
   const excerpt = truncate(note.content.replace(/[#*\->\[\]`]/g, "").trim(), 100);
+
+  // 在客户端 hydration 后设置相对时间，避免 SSR/CSR 不匹配
+  useEffect(() => {
+    setMounted(true);
+    setRelativeTime(formatRelativeTime(note.updatedAt));
+  }, [note.updatedAt]);
 
   const handleDelete = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -79,7 +89,7 @@ export function NoteCard({ note, onDelete }: NoteCardProps) {
           </div>
 
           <p className="text-[10px] sm:text-xs text-muted-foreground flex-shrink-0">
-            更新于 {formatRelativeTime(note.updatedAt)}
+            更新于 {mounted ? relativeTime : "加载中..."}
           </p>
         </CardContent>
       </Card>
