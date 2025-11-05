@@ -24,7 +24,7 @@ const AvatarFallback = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTM
     <div
       ref={ref}
       className={cn(
-        "flex h-full w-full items-center justify-center rounded-full bg-muted",
+        "flex h-full w-full items-center justify-center rounded-full bg-muted text-muted-foreground select-none",
         className
       )}
       {...props}

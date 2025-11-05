@@ -324,12 +324,25 @@ export function ProfilePageClient() {
 
   const getInitials = (name?: string | null) => {
     if (!name) return "U";
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
+    // 支持中文：如果是中文字符，取前两个字符；否则取首字母
+    const trimmedName = name.trim();
+    if (!trimmedName) return "U";
+
+    // 检查是否包含中文字符
+    const hasChinese = /[\u4e00-\u9fa5]/.test(trimmedName);
+
+    if (hasChinese) {
+      // 中文：取前两个字符
+      return trimmedName.slice(0, 2).toUpperCase();
+    } else {
+      // 英文：取单词首字母
+      return trimmedName
+        .split(/\s+/)
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2);
+    }
   };
 
   return (
@@ -342,35 +355,67 @@ export function ProfilePageClient() {
 
         {/* 头像设置 */}
         <div className="bg-card border rounded-lg p-6 space-y-4">
-          <div className="flex items-center gap-4">
-            <Avatar className="h-20 w-20 sm:h-24 sm:w-24">
-              <AvatarImage src={avatarUrl || undefined} alt={session?.user?.name || "用户"} />
-              <AvatarFallback className="text-lg sm:text-xl">
-                {getInitials(session?.user?.name)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <h2 className="text-lg font-semibold mb-2">头像</h2>
-              <div className="flex flex-wrap gap-2">
-                <label htmlFor="avatar-upload">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+            {/* 头像区域 */}
+            <div className="relative group">
+              <Avatar className="h-24 w-24 sm:h-28 sm:w-28 ring-2 ring-border transition-all duration-200">
+                {avatarUrl ? (
+                  <AvatarImage src={avatarUrl} alt={session?.user?.name || "用户"} />
+                ) : null}
+                <AvatarFallback className="text-xl sm:text-2xl font-semibold bg-primary text-primary-foreground">
+                  {getInitials(session?.user?.name)}
+                </AvatarFallback>
+              </Avatar>
+              {/* 上传按钮覆盖层 */}
+              <label
+                htmlFor="avatar-upload"
+                className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer"
+              >
+                <div className="flex flex-col items-center gap-1 text-white">
+                  <Camera className="h-5 w-5 sm:h-6 sm:w-6" />
+                  <span className="text-xs font-medium">上传</span>
+                </div>
+                <input
+                  id="avatar-upload"
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,image/gif"
+                  className="hidden"
+                  onChange={handleAvatarUpload}
+                  disabled={isUploadingAvatar}
+                />
+              </label>
+              {isUploadingAvatar && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full">
+                  <div className="flex flex-col items-center gap-1 text-white">
+                    <div className="h-5 w-5 sm:h-6 sm:w-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span className="text-xs font-medium">上传中</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 操作区域 */}
+            <div className="flex-1 w-full sm:w-auto">
+              <h2 className="text-lg font-semibold mb-3">头像设置</h2>
+              <div className="flex flex-wrap gap-2 mb-3">
+                <label htmlFor="avatar-upload-mobile">
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="default"
                     size="sm"
-                    className="cursor-pointer"
+                    className="cursor-pointer hover:bg-primary/90 transition-colors"
                     disabled={isUploadingAvatar}
                   >
-                    <span>
-                      <Camera className="h-4 w-4 mr-2" />
-                      {isUploadingAvatar ? "上传中..." : "上传头像"}
-                    </span>
+                    <Camera className="h-4 w-4 mr-2" />
+                    {isUploadingAvatar ? "上传中..." : "选择图片"}
                   </Button>
                   <input
-                    id="avatar-upload"
+                    id="avatar-upload-mobile"
                     type="file"
                     accept="image/jpeg,image/jpg,image/png,image/gif"
                     className="hidden"
                     onChange={handleAvatarUpload}
+                    disabled={isUploadingAvatar}
                   />
                 </label>
                 {avatarUrl && (
@@ -380,14 +425,15 @@ export function ProfilePageClient() {
                     size="sm"
                     onClick={handleDeleteAvatar}
                     disabled={isUploadingAvatar}
+                    className="hover:bg-destructive hover:text-destructive-foreground hover:border-destructive transition-colors"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
                     删除头像
                   </Button>
                 )}
               </div>
-              <p className="text-sm text-muted-foreground mt-2">
-                支持 JPG、PNG、GIF 格式，最大 2MB
+              <p className="text-sm text-muted-foreground">
+                支持 JPG、PNG、GIF 格式，最大 2MB。悬停头像可快速上传
               </p>
             </div>
           </div>
