@@ -20,8 +20,6 @@ v1.1 版本新增以下主要功能：
 # PostgreSQL 备份命令
 pg_dump -U your_username -d notedb > backup_v1.0_$(date +%Y%m%d).sql
 
-# 或使用 Docker
-docker exec postgres_container pg_dump -U your_username notedb > backup_v1.0_$(date +%Y%m%d).sql
 ```
 
 ### 2. 拉取最新代码
@@ -59,7 +57,7 @@ npx prisma migrate deploy
 
 #### 方式 2：手动运行迁移 SQL
 
-如果你使用 Docker 或远程数据库，可以手动执行迁移 SQL：
+如果你使用远程数据库，可以手动执行迁移 SQL：
 
 ```bash
 # 找到迁移文件
@@ -107,46 +105,6 @@ npm start
 - ✅ 为笔记分配笔记本
 - ✅ 为笔记添加标签
 - ✅ 使用筛选和排序功能
-
-## 🐳 Docker 升级
-
-如果你使用 Docker 部署，请按照以下步骤升级：
-
-### 1. 停止当前容器
-
-```bash
-docker-compose down
-```
-
-### 2. 拉取最新代码
-
-```bash
-git pull origin main
-```
-
-### 3. 重新构建镜像
-
-```bash
-docker-compose build --no-cache
-```
-
-### 4. 启动服务
-
-```bash
-docker-compose up -d
-```
-
-### 5. 运行迁移
-
-```bash
-docker-compose exec app npx prisma migrate deploy
-```
-
-### 6. 查看日志
-
-```bash
-docker-compose logs -f app
-```
 
 ## 📊 数据迁移
 
@@ -267,7 +225,6 @@ Error: P1001: Can't reach database server
 **解决方案**：
 1. 确保数据库正在运行
 2. 检查 DATABASE_URL 环境变量
-3. 如果使用 Docker，确保数据库容器已启动
 
 ### 问题 2：Prisma Client 版本不匹配
 
@@ -305,7 +262,7 @@ Error: foreign key constraint failed
 ## 📞 获取帮助
 
 如果遇到问题：
-1. 查看日志：`docker-compose logs -f` 或 `npm run dev`
+1. 查看日志：`npm run dev`
 2. 检查数据库连接
 3. 确认所有迁移都已成功执行
 4. 提交 Issue：https://github.com/chentaoyu/mars-notes/issues

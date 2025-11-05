@@ -188,7 +188,6 @@
 - react-syntax-highlighter
 
 #### 部署支持
-- Docker 容器化部署
 - Vercel 部署支持
 - VPS 部署支持
 

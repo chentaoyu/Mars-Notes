@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // 输出模式（Docker 部署需要）
+  // 输出模式
   output: "standalone",
 
   // TypedRoutes 配置（Next.js 16+ 移到顶层）

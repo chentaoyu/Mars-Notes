@@ -137,24 +137,7 @@ CREATE DATABASE notedb;
 \q
 ```
 
-#### **方法 2: Docker PostgreSQL**
-
-```bash
-# 使用 Docker 运行 PostgreSQL
-docker run --name postgres-notedb \
-  -e POSTGRES_PASSWORD=password \
-  -e POSTGRES_DB=notedb \
-  -p 5432:5432 \
-  -d postgres:14
-
-# 查看容器状态
-docker ps
-
-# 查看日志
-docker logs postgres-notedb
-```
-
-#### **方法 3: 云数据库（推荐用于测试）**
+#### **方法 2: 云数据库（推荐用于测试）**
 
 **Vercel Postgres**
 ```bash
@@ -548,133 +531,7 @@ npx prisma migrate deploy
 - ✅ 检查 API 响应时间
 - ✅ 查看 Vercel 日志
 
-### 5.2 Docker 部署
-
-#### **Dockerfile**
-
-```dockerfile
-# 基础镜像
-FROM node:18-alpine AS base
-
-# 安装依赖阶段
-FROM base AS deps
-RUN apk add --no-cache libc6-compat
-WORKDIR /app
-
-# 复制依赖文件
-COPY package.json package-lock.json* ./
-RUN npm ci
-
-# 构建阶段
-FROM base AS builder
-WORKDIR /app
-
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-
-# 生成 Prisma Client
-RUN npx prisma generate
-
-# 构建 Next.js
-ENV NEXT_TELEMETRY_DISABLED 1
-RUN npm run build
-
-# 生产运行阶段
-FROM base AS runner
-WORKDIR /app
-
-ENV NODE_ENV production
-ENV NEXT_TELEMETRY_DISABLED 1
-
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-# 复制必要文件
-COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=builder /app/prisma ./prisma
-
-USER nextjs
-
-EXPOSE 3000
-
-ENV PORT 3000
-ENV HOSTNAME "0.0.0.0"
-
-CMD ["node", "server.js"]
-```
-
-#### **docker-compose.yml**
-
-```yaml
-version: '3.8'
-
-services:
-  app:
-    build: .
-    ports:
-      - "3000:3000"
-    environment:
-      DATABASE_URL: postgresql://postgres:password@db:5432/notedb
-      NEXTAUTH_URL: http://localhost:3000
-      NEXTAUTH_SECRET: your-secret-key
-      NODE_ENV: production
-    depends_on:
-      db:
-        condition: service_healthy
-    networks:
-      - app-network
-
-  db:
-    image: postgres:14-alpine
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: notedb
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - app-network
-
-volumes:
-  postgres-data:
-
-networks:
-  app-network:
-    driver: bridge
-```
-
-#### **构建和运行**
-
-```bash
-# 构建镜像
-docker-compose build
-
-# 启动服务
-docker-compose up -d
-
-# 运行数据库迁移
-docker-compose exec app npx prisma migrate deploy
-
-# 查看日志
-docker-compose logs -f app
-
-# 停止服务
-docker-compose down
-
-# 停止并删除数据
-docker-compose down -v
-```
-
-### 5.3 VPS / 云服务器部署
+### 5.2 VPS / 云服务器部署
 
 #### **服务器配置**
 
@@ -1255,7 +1112,7 @@ REINDEX TABLE notes;
 ✅ **本地开发环境搭建**：从零开始配置开发环境  
 ✅ **环境变量管理**：安全的配置管理  
 ✅ **数据库设置**：Prisma 迁移和管理  
-✅ **多种部署方案**：Vercel、Docker、VPS  
+✅ **多种部署方案**：Vercel、VPS  
 ✅ **CI/CD 流程**：自动化测试和部署  
 ✅ **监控与维护**：日志、错误追踪、备份  
 ✅ **安全建议**：生产环境最佳实践  

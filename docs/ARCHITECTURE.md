@@ -1399,51 +1399,7 @@ const getCachedNotes = unstable_cache(
 - 零配置
 - 免费额度充足
 
-### 8.2 替代方案
-
-**Docker 容器化部署**
-```dockerfile
-# Dockerfile
-FROM node:18-alpine
-
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
-COPY . .
-RUN npx prisma generate
-RUN npm run build
-
-EXPOSE 3000
-CMD ["npm", "start"]
-```
-
-**Docker Compose**
-```yaml
-version: '3.8'
-services:
-  app:
-    build: .
-    ports:
-      - "3000:3000"
-    environment:
-      DATABASE_URL: postgresql://user:pass@db:5432/notedb
-    depends_on:
-      - db
-  
-  db:
-    image: postgres:14
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: pass
-      POSTGRES_DB: notedb
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-volumes:
-  postgres_data:
-```
-
-### 8.3 环境变量管理
+### 8.2 环境变量管理
 
 ```bash
 # .env.example
@@ -1627,7 +1583,7 @@ chore: 构建工具或辅助工具变动
 - **前端**: Next.js 14 + React 18 + TypeScript + Tailwind CSS
 - **后端**: Next.js API Routes + NextAuth.js v5
 - **数据库**: PostgreSQL + Prisma ORM
-- **部署**: Vercel (推荐) / Docker
+- **部署**: Vercel (推荐) / VPS
 
 **下一步**
 请参考其他文档继续了解：
