@@ -32,9 +32,11 @@ cp .env.example .env
 
 编辑 `.env` 文件，配置以下内容：
 
+**方式一：直接配置（简单）**
+
 ```env
 # 数据库连接（本地 PostgreSQL）
-DATABASE_URL="postgresql://postgres:password@localhost:5432/notedb?schema=public"
+DATABASE_URL="postgresql://postgres:password@localhost:5432/notebook?schema=public"
 
 # NextAuth.js 配置
 NEXTAUTH_URL="http://localhost:3000"
@@ -43,6 +45,31 @@ NEXTAUTH_SECRET="your-super-secret-key-change-this"
 # 环境
 NODE_ENV="development"
 ```
+
+**方式二：使用变量引用（推荐，更灵活）**
+
+```env
+# 数据库配置（基础变量）
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=password
+POSTGRES_DB=notebook
+POSTGRES_PORT=5432
+POSTGRES_HOST=localhost
+
+# 使用变量引用自动组合连接字符串
+DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?schema=public"
+
+# NextAuth.js 配置
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="your-super-secret-key-change-this"
+
+# 环境
+NODE_ENV="development"
+```
+
+**💡 变量引用说明**
+
+项目已支持在 `.env` 文件中使用变量引用，使用 `${VAR_NAME}` 语法可以引用其他环境变量。这样配置更灵活，修改数据库配置时只需更新基础变量即可。
 
 **生成 NEXTAUTH_SECRET**：
 ```bash
@@ -58,8 +85,8 @@ openssl rand -base64 32
 brew install postgresql@14
 brew services start postgresql@14
 
-# 创建数据库
-createdb notedb
+# 创建数据库（根据 .env 中的 POSTGRES_DB 配置）
+createdb notebook  # 或使用你在 .env 中配置的数据库名
 ```
 
 #### 选项 B：使用云数据库
@@ -178,6 +205,9 @@ mars-notes/
 │   ├── DATABASE.md
 │   ├── API.md
 │   └── DEPLOYMENT.md
+├── .env.example                 # 环境变量示例（支持变量引用）
+├── load-env.js                  # 环境变量加载脚本（支持变量展开）
+├── next.config.js               # Next.js 配置
 └── ...配置文件
 ```
 
@@ -219,8 +249,9 @@ mars-notes/
 
 **解决方案**：
 - 检查 PostgreSQL 是否启动
-- 确认 `.env` 中的 `DATABASE_URL` 正确
-- 测试连接：`psql "postgresql://..."`
+- 确认 `.env` 中的 `DATABASE_URL` 正确（如果使用变量引用，确保基础变量已正确设置）
+- 测试连接：`psql "postgresql://..."` 或使用 `psql -U $POSTGRES_USER -d $POSTGRES_DB`
+- 如果使用变量引用，验证变量是否已正确展开：运行 `node -e "require('./load-env'); console.log(process.env.DATABASE_URL)"`
 
 ### 问题 2: Prisma 错误
 
@@ -277,10 +308,10 @@ PORT=3001 npm run dev
 ## 💡 下一步优化建议
 
 ### 短期（v1.1）
-- [ ] 添加搜索功能 UI
-- [ ] 笔记本分类
-- [ ] 标签系统
-- [ ] 快捷键支持
+- [x] 添加搜索功能 UI
+- [x] 笔记本分类
+- [x] 标签系统
+- [x] 快捷键支持
 
 ### 中期（v1.2）
 - [ ] 暗黑模式

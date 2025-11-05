@@ -1,3 +1,6 @@
+// 加载并展开环境变量（支持变量引用）
+require("./load-env");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // 输出模式

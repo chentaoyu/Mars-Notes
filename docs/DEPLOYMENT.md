@@ -224,7 +224,19 @@ npx prisma generate     # 生成 Prisma Client
 # ============================================
 # 数据库配置
 # ============================================
+# 方式一：直接配置完整连接字符串
 DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE"
+
+# 方式二：使用变量引用（推荐，更灵活）
+# 首先定义数据库连接的各部分
+POSTGRES_USER="postgres"
+POSTGRES_PASSWORD="your-password"
+POSTGRES_HOST="localhost"
+POSTGRES_PORT="5432"
+POSTGRES_DATABASE="notedb"
+
+# 然后使用变量引用组合成完整的连接字符串
+DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DATABASE}?schema=public"
 
 # ============================================
 # NextAuth.js 认证配置
@@ -251,12 +263,54 @@ NODE_ENV="development"
 # LOG_LEVEL="info"
 ```
 
+**💡 环境变量引用说明**
+
+项目已配置支持在 `.env` 文件中使用变量引用，语法如下：
+
+- 使用 `${VAR_NAME}` 引用其他环境变量
+- 变量引用会在加载时自动展开
+- 支持嵌套引用（变量可以引用其他变量）
+
+**示例：**
+
+```env
+# 定义基础配置
+API_BASE_URL="https://api.example.com"
+API_VERSION="v1"
+
+# 使用变量引用组合完整 URL
+API_URL="${API_BASE_URL}/${API_VERSION}"
+
+# 数据库连接示例
+DB_USER="myuser"
+DB_PASS="mypass"
+DB_HOST="localhost"
+DB_PORT="5432"
+DB_NAME="mydb"
+
+# 组合完整的数据库连接字符串
+DATABASE_URL="postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
+```
+
 ### 3.2 不同环境的配置
 
 #### **开发环境** (`.env.local`)
 
 ```env
+# 方式一：直接配置
 DATABASE_URL="postgresql://postgres:password@localhost:5432/notedb"
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="dev-secret-key-only-for-development"
+NODE_ENV="development"
+
+# 方式二：使用变量引用（推荐）
+POSTGRES_USER="postgres"
+POSTGRES_PASSWORD="password"
+POSTGRES_HOST="localhost"
+POSTGRES_PORT="5432"
+POSTGRES_DATABASE="notedb"
+
+DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DATABASE}?schema=public"
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="dev-secret-key-only-for-development"
 NODE_ENV="development"
@@ -363,6 +417,150 @@ npx prisma migrate deploy
 
 # 3. 验证迁移
 npx prisma migrate status
+```
+
+### 4.3.1 切换数据库后的迁移指南
+
+当你需要切换 `POSTGRES_DB`（数据库名称）时，需要在新数据库中重新应用所有迁移。以下是详细步骤：
+
+#### **场景 1: 全新数据库（无数据需要迁移）**
+
+如果新数据库是空的，只需要应用现有的迁移文件：
+
+```bash
+# 1. 更新 .env 文件中的 DATABASE_URL
+# 例如：从 notedb 切换到 notedb_prod
+DATABASE_URL="postgresql://user:password@localhost:5432/notedb_prod"
+
+# 2. 确保新数据库已创建（如果不存在）
+createdb notedb_prod
+# 或使用 psql
+psql postgres -c "CREATE DATABASE notedb_prod;"
+
+# 3. 生成 Prisma Client（使用新的数据库连接）
+npx prisma generate
+
+# 4. 应用所有现有迁移到新数据库
+npx prisma migrate deploy
+
+# 5. 验证迁移状态
+npx prisma migrate status
+```
+
+#### **场景 2: 需要迁移数据（从旧数据库到新数据库）**
+
+如果需要保留现有数据，需要先迁移数据，再应用迁移：
+
+```bash
+# 1. 备份旧数据库
+pg_dump -U postgres -d notedb > backup_$(date +%Y%m%d_%H%M%S).sql
+
+# 2. 创建新数据库
+createdb notedb_prod
+
+# 3. 先应用迁移到新数据库（创建表结构）
+DATABASE_URL="postgresql://user:password@localhost:5432/notedb_prod" npx prisma migrate deploy
+
+# 4. 迁移数据（只迁移数据，不迁移结构）
+pg_dump -U postgres -d notedb --data-only --inserts | \
+  psql -U postgres -d notedb_prod
+
+# 5. 更新 .env 文件
+DATABASE_URL="postgresql://user:password@localhost:5432/notedb_prod"
+
+# 6. 重新生成 Prisma Client
+npx prisma generate
+
+# 7. 验证数据迁移
+npx prisma studio
+```
+
+#### **场景 3: 使用 Docker 环境变量切换**
+
+如果使用 Docker Compose，可能通过环境变量 `POSTGRES_DB` 切换数据库：
+
+```bash
+# 1. 更新 docker-compose.yml 或 .env 文件
+POSTGRES_DB=notedb_prod
+
+# 2. 重启 PostgreSQL 容器（如果数据库不存在会自动创建）
+docker-compose down
+docker-compose up -d postgres
+
+# 3. 等待数据库就绪
+sleep 5
+
+# 4. 更新应用的 DATABASE_URL
+DATABASE_URL="postgresql://postgres:password@localhost:5432/notedb_prod"
+
+# 5. 应用迁移
+npx prisma migrate deploy
+
+# 6. 验证
+npx prisma migrate status
+```
+
+#### **迁移验证步骤**
+
+```bash
+# 1. 检查迁移状态
+npx prisma migrate status
+
+# 2. 查看数据库表结构
+npx prisma studio
+
+# 3. 连接数据库验证
+psql -U postgres -d notedb_prod
+# 在 psql 中执行：
+\dt          # 列出所有表
+SELECT COUNT(*) FROM users;  # 验证数据
+\q           # 退出
+```
+
+#### **常见问题排查**
+
+**问题 1: 迁移状态不一致**
+
+```bash
+# 如果迁移状态显示不一致，可以重置迁移历史（⚠️ 谨慎使用）
+npx prisma migrate resolve --applied 20251104052944_init
+npx prisma migrate resolve --applied 20251104152414_add_notebooks_and_tags
+```
+
+**问题 2: 数据库连接失败**
+
+```bash
+# 检查数据库是否运行
+pg_isready -U postgres
+
+# 检查数据库是否存在
+psql -U postgres -l | grep notedb_prod
+
+# 测试连接
+psql -U postgres -d notedb_prod -c "SELECT version();"
+```
+
+**问题 3: 迁移文件冲突**
+
+```bash
+# 查看迁移历史
+ls -la prisma/migrations/
+
+# 检查迁移锁定文件
+cat prisma/migrations/migration_lock.toml
+```
+
+#### **最佳实践**
+
+1. **始终备份**：切换数据库前先备份原数据库
+2. **测试环境验证**：先在测试环境验证迁移流程
+3. **使用迁移部署命令**：生产环境使用 `migrate deploy`，开发环境使用 `migrate dev`
+4. **版本控制**：确保迁移文件已提交到 Git
+5. **监控迁移状态**：迁移后检查 `_prisma_migrations` 表
+
+```bash
+# 查看迁移历史表
+psql -U postgres -d notedb_prod -c "SELECT * FROM _prisma_migrations ORDER BY finished_at;"
 ```
 
 ### 4.4 数据库连接池
