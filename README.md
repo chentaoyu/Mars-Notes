@@ -33,7 +33,7 @@ Mars-Notes 是一款面向个人用户的轻量级在线笔记应用，提供流
 
 ### 环境要求
 
-- Node.js 18.17.0+
+- Node.js 22.14.0+
 - PostgreSQL 14+
 - npm / pnpm / yarn
 
