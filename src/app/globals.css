@@ -2,6 +2,43 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Vditor 编辑器样式 */
+.vditor-container {
+  min-height: 400px;
+}
+
+.vditor-container .vditor {
+  height: 100% !important;
+  min-height: 400px;
+}
+
+.vditor-container .vditor__content {
+  min-height: 300px;
+}
+
+/* 适配暗色模式 */
+.dark .vditor-container .vditor {
+  background-color: rgb(9 9 11);
+}
+
+.dark .vditor-container .vditor__content {
+  background-color: rgb(9 9 11);
+  color: rgb(250 250 250);
+}
+
+/* 移动端优化 */
+@media (max-width: 768px) {
+  .vditor-container .vditor__toolbar {
+    flex-wrap: wrap;
+    padding: 4px;
+  }
+  
+  .vditor-container .vditor__toolbar button {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+}
+
 @layer base {
   :root {
     /* 背景色 - 纯白色 */
@@ -118,6 +155,36 @@
 
 .note-card {
   @apply transition-all duration-200 hover:shadow-md hover:-translate-y-0.5;
+}
+
+/* 笔记卡片中的 Markdown 预览样式 */
+.markdown-preview-card {
+  @apply max-h-20 overflow-hidden;
+}
+
+.markdown-preview-card .markdown-body {
+  @apply p-0 m-0 !important;
+  @apply prose prose-slate max-w-none dark:prose-invert;
+  @apply prose-sm;
+  @apply prose-headings:mt-0 prose-headings:mb-1 prose-headings:text-sm;
+  @apply prose-p:my-0.5 prose-p:text-xs prose-p:leading-relaxed;
+  @apply prose-ul:my-0.5 prose-ol:my-0.5;
+  @apply prose-li:my-0 prose-li:text-xs;
+  @apply prose-code:text-[10px] prose-code:px-1 prose-code:py-0.5 prose-code:rounded;
+  @apply prose-pre:my-0.5 prose-pre:text-[10px] prose-pre:overflow-hidden;
+  @apply prose-blockquote:my-0.5 prose-blockquote:border-l-2 prose-blockquote:text-xs;
+  @apply prose-hr:my-0.5;
+  @apply prose-table:text-xs;
+  @apply prose-strong:text-xs;
+  @apply prose-em:text-xs;
+}
+
+.markdown-preview-card .markdown-body > * {
+  @apply line-clamp-2;
+}
+
+.markdown-preview-card .markdown-body > *:last-child {
+  @apply mb-0;
 }
 
 .save-indicator {

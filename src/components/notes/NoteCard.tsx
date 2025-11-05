@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import { formatRelativeTime, truncate } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { type Note } from "@/types";
 import { FileText, Trash2 } from "lucide-react";
+import { MarkdownPreview } from "@/components/editor/MarkdownPreview";
 
 interface NoteCardProps {
   note: Note;
@@ -13,16 +14,15 @@ interface NoteCardProps {
 }
 
 export function NoteCard({ note, onDelete }: NoteCardProps) {
-  const [relativeTime, setRelativeTime] = useState<string>("");
-  const [mounted, setMounted] = useState(false);
+  // 提取内容的前150个字符作为预览（保留 markdown 格式）
+  const previewContent = truncate(note.content.trim(), 150);
 
-  // 提取内容的前100个字符作为摘要
-  const excerpt = truncate(note.content.replace(/[#*\->\[\]`]/g, "").trim(), 100);
-
-  // 在客户端 hydration 后设置相对时间，避免 SSR/CSR 不匹配
-  useEffect(() => {
-    setMounted(true);
-    setRelativeTime(formatRelativeTime(note.updatedAt));
+  // 使用 useMemo 在客户端计算相对时间，避免 SSR/CSR 不匹配
+  const relativeTime = useMemo(() => {
+    if (typeof window === "undefined") {
+      return "";
+    }
+    return formatRelativeTime(note.updatedAt);
   }, [note.updatedAt]);
 
   const handleDelete = (e: React.MouseEvent) => {
@@ -52,12 +52,17 @@ export function NoteCard({ note, onDelete }: NoteCardProps) {
               </button>
             )}
           </div>
-          <CardDescription className="line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem] text-xs sm:text-sm">
-            {excerpt || "无内容"}
-          </CardDescription>
         </CardHeader>
         <CardContent className="flex-1 flex flex-col justify-between space-y-2 min-h-0 pt-0">
-          <div className="space-y-1 sm:space-y-2 flex-shrink-0">
+          {/* Markdown 预览 */}
+          {note.content.trim() && (
+            <div className="flex-1 min-h-0 overflow-hidden mb-2">
+              <div className="markdown-preview-card h-full overflow-hidden">
+                <MarkdownPreview content={previewContent} />
+              </div>
+            </div>
+          )}
+          <div className="space-y-1 sm:space-y-2 flex-shrink-0 mt-auto">
             {/* 笔记本标签 */}
             {note.notebook && (
               <div className="flex items-center gap-1 text-[10px] sm:text-xs">
@@ -89,7 +94,7 @@ export function NoteCard({ note, onDelete }: NoteCardProps) {
           </div>
 
           <p className="text-[10px] sm:text-xs text-muted-foreground flex-shrink-0">
-            更新于 {mounted ? relativeTime : "加载中..."}
+            更新于 {relativeTime || "加载中..."}
           </p>
         </CardContent>
       </Card>

@@ -7,7 +7,7 @@
     "dev": "next dev --turbo",
     "dev:legacy": "next dev",
     "build": "next build && mkdir -p .next/standalone/.next && cp -r .next/static .next/standalone/.next/",
-    "start": "next start",
+    "start": "node .next/standalone/server.js",
     "lint": "eslint .",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
     "type-check": "tsc --noEmit",
@@ -45,6 +45,7 @@
     "react-syntax-highlighter": "^15.5.0",
     "remark-gfm": "^4.0.0",
     "tailwind-merge": "^2.2.2",
+    "vditor": "^3.11.2",
     "zod": "^3.22.4"
   },
   "devDependencies": {

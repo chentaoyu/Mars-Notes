@@ -21,7 +21,7 @@ Mars-Notes 是一款面向个人用户的轻量级在线笔记应用，提供流
   - 昵称修改
   - 密码重置
   - 账户注销
-- ✅ Markdown 编辑器（实时预览）
+- ✅ Markdown 编辑器（Vditor 分屏预览）
 - ✅ 笔记 CRUD 操作
 - ✅ 笔记本分类管理
 - ✅ 标签系统
@@ -89,7 +89,7 @@ npm run dev
 - **UI 库**: React 18 + Tailwind CSS
 - **状态管理**: React Context
 - **表单验证**: React Hook Form + Zod
-- **Markdown**: react-markdown + react-syntax-highlighter
+- **Markdown**: vditor (编辑器) + react-markdown (预览)
 
 ### 后端
 - **运行时**: Node.js (Next.js API Routes)
@@ -189,9 +189,14 @@ mars-notes/
 
 ### Markdown 支持
 - 标准 Markdown 语法
-- 代码高亮（100+ 语言）
+- 分屏预览模式（编辑与预览同步）
+- 代码高亮（100+ 语言，支持行号）
+- 数学公式支持（KaTeX）
 - GFM（GitHub Flavored Markdown）
+- 目录生成（TOC）
+- 脚注支持
 - 表格、引用、链接等
+- 丰富的工具栏（标题、加粗、斜体、列表、代码块等）
 
 ---
 
@@ -417,7 +422,7 @@ npx prisma generate      # 生成 Prisma Client
 - [Tailwind CSS](https://tailwindcss.com/) - CSS 框架
 - [Prisma](https://www.prisma.io/) - 数据库 ORM
 - [NextAuth.js](https://authjs.dev/) - 认证方案
-- [react-markdown](https://github.com/remarkjs/react-markdown) - Markdown 渲染
+- [vditor](https://github.com/Vanessa219/vditor) - Markdown 编辑器
 - [PostgreSQL](https://www.postgresql.org/) - 数据库
 
 ---

@@ -4,7 +4,7 @@
 
 - **项目名称**: Mars-Notes
 - **架构版本**: v1.2
-- **文档版本**: 1.2
+- **文档版本**: 1.2.1
 - **创建日期**: 2025-11-04
 - **最后更新**: 2025-01-27
 
@@ -144,26 +144,30 @@
 
 #### **Markdown 支持**
 
-**react-markdown**
+**vditor**
 - **选择理由**: 
-  - React 生态下最流行的 Markdown 渲染库
+  - 功能丰富的 Markdown 编辑器
+  - 内置分屏预览模式（sv 模式），编辑与预览同步
+  - 支持代码高亮（100+ 编程语言，支持行号）
+  - 支持数学公式渲染（KaTeX）
+  - 支持目录生成（TOC）、脚注、GFM 等特性
+  - 丰富的工具栏和快捷键
+  - 优秀的用户体验和性能
+- **使用场景**: Markdown 编辑器（主要编辑场景）
+
+**react-markdown**（可选，用于其他预览场景）
+- **选择理由**: 
+  - React 生态下流行的 Markdown 渲染库
   - 支持自定义组件映射
   - 安全的 HTML 渲染
-- **使用场景**: Markdown 预览
+- **使用场景**: 笔记列表预览等其他场景
 
-**react-syntax-highlighter**
+**react-syntax-highlighter**（可选，用于 react-markdown 的代码高亮）
 - **选择理由**: 
   - 支持 100+ 编程语言
   - 多种高亮主题
   - 轻量级，按需加载
-- **使用场景**: 代码块语法高亮
-
-**remark / rehype 插件**
-- **选择理由**: 
-  - 扩展 Markdown 功能
-  - 支持 GFM (GitHub Flavored Markdown)
-  - 插件生态丰富
-- **使用场景**: Markdown 解析增强
+- **使用场景**: 配合 react-markdown 使用（仅在非 Vditor 场景）
 
 #### **表单和验证**
 
@@ -375,9 +379,9 @@ mars-notes/
 │   │   │   └── TagSelector.tsx  # 标签选择器
 │   │   │
 │   │   ├── editor/              # 编辑器相关组件
-│   │   │   ├── MarkdownEditor.tsx # Markdown 编辑器
-│   │   │   ├── MarkdownPreview.tsx # Markdown 预览
-│   │   │   ├── EditorToolbar.tsx   # 编辑器工具栏
+│   │   │   ├── MarkdownEditor.tsx # Markdown 编辑器（主组件）
+│   │   │   ├── VditorEditor.tsx    # Vditor 编辑器组件
+│   │   │   ├── MarkdownPreview.tsx # Markdown 预览（用于其他场景）
 │   │   │   └── AutoSaveIndicator.tsx # 保存状态指示器
 │   │   │
 │   │   └── layout/              # 布局组件
@@ -757,10 +761,12 @@ export async function DELETE(
 ### 4.3 编辑器模块
 
 #### **模块职责**
-- Markdown 编辑
-- 实时预览
+- Markdown 编辑（基于 Vditor）
+- 分屏预览（编辑与预览同步）
 - 自动保存
-- 代码高亮
+- 代码高亮（内置）
+- 数学公式支持（KaTeX）
+- 目录生成（TOC）
 
 #### **组件实现**
 
@@ -768,39 +774,54 @@ export async function DELETE(
 ```typescript
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { useDebounce } from "@/hooks/useDebounce";
-import { MarkdownPreview } from "./MarkdownPreview";
 import { AutoSaveIndicator } from "./AutoSaveIndicator";
+import { VditorEditor } from "./VditorEditor";
+// ... 其他导入
 
 interface MarkdownEditorProps {
   noteId: string;
   initialTitle: string;
   initialContent: string;
+  initialNotebookId?: string;
+  initialTags?: Tag[];
 }
 
 export function MarkdownEditor({
   noteId,
   initialTitle,
   initialContent,
+  initialNotebookId,
+  initialTags = [],
 }: MarkdownEditorProps) {
   const [title, setTitle] = useState(initialTitle);
   const [content, setContent] = useState(initialContent);
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
-  // 防抖，2 秒后自动保存
-  const debouncedContent = useDebounce(content, 2000);
-  const debouncedTitle = useDebounce(title, 2000);
+  // 防抖，1 秒后自动保存
+  const debouncedContent = useDebounce(content, 1000);
+  const debouncedTitle = useDebounce(title, 1000);
 
   useEffect(() => {
-    const save = async () => {
+    const saveNote = async () => {
+      if (debouncedContent === initialContent && debouncedTitle === initialTitle) {
+        return;
+      }
+
       setSaving(true);
       try {
         await fetch(`/api/notes/${noteId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title, content }),
+          body: JSON.stringify({
+            title,
+            content,
+            notebookId: notebookId || null,
+            tagIds,
+          }),
         });
         setLastSaved(new Date());
       } catch (error) {
@@ -810,41 +831,129 @@ export function MarkdownEditor({
       }
     };
 
-    if (debouncedContent !== initialContent || debouncedTitle !== initialTitle) {
-      save();
+    if (debouncedContent !== undefined || debouncedTitle !== undefined) {
+      saveNote();
     }
   }, [debouncedContent, debouncedTitle]);
 
   return (
-    <div className="flex h-screen">
-      {/* 编辑器部分 */}
-      <div className="w-1/2 flex flex-col border-r">
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="p-4 text-2xl font-bold border-b"
-          placeholder="笔记标题"
-        />
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          className="flex-1 p-4 resize-none font-mono"
-          placeholder="开始编写你的笔记..."
-        />
-        <AutoSaveIndicator saving={saving} lastSaved={lastSaved} />
+    <div className="flex h-[calc(100vh-4rem)] flex-col">
+      {/* 工具栏 */}
+      <div className="border-b">
+        {/* 标题输入、笔记本选择、标签选择等 */}
       </div>
 
-      {/* 预览部分 */}
-      <div className="w-1/2 overflow-auto">
-        <MarkdownPreview content={content} />
+      {/* 编辑器 - Vditor 内置分屏预览功能 */}
+      <div className="flex flex-1 overflow-hidden flex-col">
+        <div className="flex-1 overflow-hidden">
+          <VditorEditor content={content} onContentChange={setContent} />
+        </div>
+        <AutoSaveIndicator saving={saving} lastSaved={lastSaved} />
       </div>
     </div>
   );
 }
 ```
 
+**Vditor 编辑器组件** (`src/components/editor/VditorEditor.tsx`)
+```typescript
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import Vditor from "vditor";
+import "vditor/dist/index.css";
+
+interface VditorEditorProps {
+  content: string;
+  onContentChange: (content: string) => void;
+}
+
+export function VditorEditor({ content, onContentChange }: VditorEditorProps) {
+  const [vd, setVd] = useState<Vditor>();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<string>(content);
+  const onChangeRef = useRef(onContentChange);
+  const isInitializedRef = useRef(false);
+
+  // 初始化 Vditor
+  useEffect(() => {
+    if (!containerRef.current || isInitializedRef.current) return;
+
+    contentRef.current = content;
+
+    const vditor = new Vditor("vditor", {
+      height: "100%",
+      mode: "sv", // 分屏预览模式
+      preview: {
+        delay: 300,
+        hljs: {
+          enable: true,
+          style: "github",
+          lineNumber: true,
+        },
+        markdown: {
+          toc: true,
+          footnotes: true,
+          autoSpace: true,
+          fixTermTypo: true,
+        },
+        math: {
+          engine: "KaTeX",
+        },
+      },
+      input: (value: string) => {
+        if (value !== contentRef.current) {
+          contentRef.current = value;
+          onChangeRef.current(value);
+        }
+      },
+      toolbar: [
+        "headings", "bold", "italic", "strike", "|",
+        "line", "quote", "list", "ordered-list", "check", "|",
+        "code", "inline-code", "|",
+        "link", "table", "|",
+        "undo", "redo", "|",
+        "fullscreen", "edit-mode", "preview-mode", "both", "|",
+        "outline", "help",
+      ],
+      cache: {
+        enable: false, // 禁用缓存，因为我们自己管理内容
+      },
+      after: () => {
+        if (contentRef.current) {
+          vditor.setValue(contentRef.current);
+        }
+        setVd(vditor);
+        isInitializedRef.current = true;
+      },
+    });
+
+    return () => {
+      isInitializedRef.current = false;
+    };
+  }, []);
+
+  // 同步外部内容变化到编辑器
+  useEffect(() => {
+    if (vd && content !== contentRef.current) {
+      const currentValue = vd.getValue();
+      if (currentValue !== content) {
+        contentRef.current = content;
+        vd.setValue(content);
+      }
+    }
+  }, [content, vd]);
+
+  return (
+    <div ref={containerRef} className="vditor-container h-full w-full">
+      <div id="vditor" className="h-full w-full" />
+    </div>
+  );
+}
+```
+
 **Markdown 预览** (`src/components/editor/MarkdownPreview.tsx`)
+> 注意：此组件主要用于笔记列表预览等其他场景，编辑器已使用 Vditor 内置预览功能
 ```typescript
 "use client";
 
@@ -859,11 +968,11 @@ interface MarkdownPreviewProps {
 
 export function MarkdownPreview({ content }: MarkdownPreviewProps) {
   return (
-    <div className="prose prose-slate max-w-none p-4">
+    <div className="markdown-body prose prose-slate max-w-none p-3 sm:p-6">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
-          code({ node, inline, className, children, ...props }) {
+          code({ node, inline, className, children, ...props }: any) {
             const match = /language-(\w+)/.exec(className || "");
             return !inline && match ? (
               <SyntaxHighlighter
@@ -882,7 +991,7 @@ export function MarkdownPreview({ content }: MarkdownPreviewProps) {
           },
         }}
       >
-        {content}
+        {content || "*开始编写你的笔记...*"}
       </ReactMarkdown>
     </div>
   );
@@ -1505,7 +1614,7 @@ export const logger = {
 - ✅ 笔记管理模块（CRUD、搜索、过滤）
 - ✅ 笔记本功能模块（分类管理、排序）
 - ✅ 标签系统模块（多对多关联、统计）
-- ✅ Markdown 编辑器（实时预览、代码高亮）
+- ✅ Markdown 编辑器（Vditor 分屏预览、代码高亮、数学公式、TOC）
 - ✅ 自动保存功能
 
 **未来可扩展功能**
@@ -1571,13 +1680,13 @@ chore: 构建工具或辅助工具变动
 - ✅ 易于扩展，支持持续迭代
 - ✅ 模块化设计，功能清晰独立
 
-**当前功能状态 (v1.1)**
+**当前功能状态 (v1.2)**
 - ✅ 用户认证系统
 - ✅ 笔记 CRUD 完整功能
 - ✅ 笔记本分类管理
 - ✅ 标签系统
 - ✅ 高级搜索和过滤
-- ✅ Markdown 编辑器
+- ✅ Markdown 编辑器（Vditor 分屏预览）
 - ✅ 自动保存
 
 **技术栈总览**
@@ -1595,6 +1704,7 @@ chore: 构建工具或辅助工具变动
 ---
 
 **更新历史**
+- **v1.2** (2025-01-27): 编辑器升级为 Vditor，支持分屏预览、数学公式、TOC 等功能
 - **v1.1** (2025-11-04): 新增笔记本和标签功能
 - **v1.0** (2025-11-04): 初始版本，包含基础笔记功能
 

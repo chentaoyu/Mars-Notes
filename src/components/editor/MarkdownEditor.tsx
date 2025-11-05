@@ -3,12 +3,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useDebounce } from "@/hooks/useDebounce";
-import { MarkdownPreview } from "./MarkdownPreview";
 import { AutoSaveIndicator } from "./AutoSaveIndicator";
+import { VditorEditor } from "./VditorEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
-import { ArrowLeft, Trash2, Book, Tag as TagIcon, Eye, Edit } from "lucide-react";
+import { ArrowLeft, Trash2, Book, Tag as TagIcon } from "lucide-react";
 import Link from "next/link";
 import { Tag, Notebook } from "@/types";
 import { TagSelector } from "@/components/tags/TagSelector";
@@ -40,13 +40,11 @@ export function MarkdownEditor({
   const [showNotebookSelect, setShowNotebookSelect] = useState(false);
   const [showTagSelect, setShowTagSelect] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<"edit" | "preview">("edit"); // 移动端视图切换
   const tagSelectButtonRef = useRef<HTMLButtonElement>(null);
   const tagSelectDropdownRef = useRef<HTMLDivElement>(null);
   const [tagSelectPosition, setTagSelectPosition] = useState({
     top: 0,
     left: 0,
-    right: 0,
     width: 384,
   });
 
@@ -177,7 +175,6 @@ export function MarkdownEditor({
         setTagSelectPosition({
           top,
           left,
-          right: viewportWidth - left - dropdownWidth,
           width: dropdownWidth,
         });
       };
@@ -271,28 +268,6 @@ export function MarkdownEditor({
 
         {/* 元数据工具栏 */}
         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-2 bg-gray-50 dark:bg-gray-900">
-          {/* 移动端视图切换 */}
-          <div className="flex md:hidden gap-1">
-            <Button
-              variant={viewMode === "edit" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setViewMode("edit")}
-              className="h-7 text-xs"
-            >
-              <Edit className="h-3 w-3 mr-1" />
-              编辑
-            </Button>
-            <Button
-              variant={viewMode === "preview" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setViewMode("preview")}
-              className="h-7 text-xs"
-            >
-              <Eye className="h-3 w-3 mr-1" />
-              预览
-            </Button>
-          </div>
-
           {/* 笔记本选择 */}
           <div className="relative">
             <Button
@@ -375,36 +350,13 @@ export function MarkdownEditor({
         </div>
       </div>
 
-      {/* 编辑器和预览 */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* 编辑器部分 - 桌面端并排显示，移动端根据 viewMode 切换 */}
-        <div
-          className={`flex flex-col border-r md:w-1/2 ${viewMode === "edit" ? "w-full" : "hidden md:flex"}`}
-        >
-          <div className="flex-1 overflow-auto">
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="h-full w-full resize-none p-3 sm:p-6 font-mono text-xs sm:text-sm focus:outline-none dark:bg-gray-950"
-              placeholder="开始编写你的笔记...
-
-支持 Markdown 语法：
-# 标题
-**粗体** *斜体*
-- 列表
-[链接](url)
-```代码块```
-"
-            />
+      {/* 编辑器 - Vditor 内置分屏预览功能 */}
+      <div className="flex flex-1 overflow-hidden flex-col">
+        <div className="flex flex-col flex-1 overflow-hidden">
+          <div className="flex-1 overflow-hidden">
+            <VditorEditor content={content} onContentChange={setContent} />
           </div>
           <AutoSaveIndicator saving={saving} lastSaved={lastSaved} />
-        </div>
-
-        {/* 预览部分 - 桌面端并排显示，移动端根据 viewMode 切换 */}
-        <div
-          className={`overflow-auto bg-muted/30 md:w-1/2 ${viewMode === "preview" ? "w-full" : "hidden md:block"}`}
-        >
-          <MarkdownPreview content={content} />
         </div>
       </div>
 
