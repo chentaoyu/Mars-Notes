@@ -51,8 +51,8 @@ export function MarkdownEditor({
   });
 
   // 防抖，2 秒后自动保存
-  const debouncedContent = useDebounce(content, 2000);
-  const debouncedTitle = useDebounce(title, 2000);
+  const debouncedContent = useDebounce(content, 1000);
+  const debouncedTitle = useDebounce(title, 1000);
 
   // 加载笔记本列表
   useEffect(() => {
