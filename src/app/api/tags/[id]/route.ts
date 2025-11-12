@@ -18,7 +18,16 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const userId = session.user.id;
-    const { id: tagId } = await params;
+    const resolvedParams = await params;
+    const tagId = resolvedParams?.id;
+
+    // 验证标签 ID 是否存在
+    if (!tagId) {
+      return NextResponse.json(
+        { error: "标签 ID 不能为空", code: "INVALID_TAG_ID" },
+        { status: 400 }
+      );
+    }
 
     const tag = await prisma.tag.findUnique({
       where: { id: tagId },
@@ -57,7 +66,16 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const userId = session.user.id;
-    const { id: tagId } = await params;
+    const resolvedParams = await params;
+    const tagId = resolvedParams?.id;
+
+    // 验证标签 ID 是否存在
+    if (!tagId) {
+      return NextResponse.json(
+        { error: "标签 ID 不能为空", code: "INVALID_TAG_ID" },
+        { status: 400 }
+      );
+    }
 
     // 验证标签存在且属于当前用户
     const existingTag = await prisma.tag.findUnique({
@@ -133,7 +151,16 @@ export async function DELETE(
     }
 
     const userId = session.user.id;
-    const { id: tagId } = await params;
+    const resolvedParams = await params;
+    const tagId = resolvedParams?.id;
+
+    // 验证标签 ID 是否存在
+    if (!tagId) {
+      return NextResponse.json(
+        { error: "标签 ID 不能为空", code: "INVALID_TAG_ID" },
+        { status: 400 }
+      );
+    }
 
     // 验证标签存在且属于当前用户
     const tag = await prisma.tag.findUnique({
