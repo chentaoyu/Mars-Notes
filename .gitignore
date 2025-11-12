@@ -6,6 +6,8 @@
 .pnp.js
 .pnpm-store
 
+public
+
 # testing
 /coverage
 

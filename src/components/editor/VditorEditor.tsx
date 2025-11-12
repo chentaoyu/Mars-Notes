@@ -29,6 +29,7 @@ export function VditorEditor({ content, onContentChange }: VditorEditorProps) {
 
     const vditor = new Vditor("vditor", {
       height: "100%",
+      cdn: "/vendor/vditor",
       mode: "sv", // 分屏预览模式
       preview: {
         delay: 300,

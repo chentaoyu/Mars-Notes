@@ -19,7 +19,7 @@
     "lint": "eslint .",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
     "type-check": "tsc --noEmit",
-    "postinstall": "prisma generate",
+    "postinstall": "prisma generate && node tools/copy-vditor-assets.js",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "db:generate": "prisma generate",
