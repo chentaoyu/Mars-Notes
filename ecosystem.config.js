@@ -23,8 +23,8 @@ module.exports = {
         PORT: 3000,
       },
       // 日志配置
-      error_file: "/var/log/mars-notes-error.log",
-      out_file: "/var/log/mars-notes-out.log",
+      error_file: "/var/www/logs/mars-notes-error.log",
+      out_file: "/var/www/logs/mars-notes-out.log",
       log_date_format: "YYYY-MM-DD HH:mm:ss Z",
       merge_logs: true,
       // 自动重启配置
