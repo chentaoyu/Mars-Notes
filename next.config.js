@@ -1,6 +1,8 @@
 // 加载并展开环境变量（支持变量引用）
 require("./load-env");
 
+console.log("process.env.NODE_ENV", process.env.NODE_ENV);
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // 输出模式

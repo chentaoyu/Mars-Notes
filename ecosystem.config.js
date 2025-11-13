@@ -17,7 +17,7 @@ module.exports = {
       // 主应用
       name: "mars-notes",
       script: "node",
-      args: "./start-server.js",
+      args: ".next/standalone/server.js",
       cwd: "/var/www/note-book",
       instances: 1,
       exec_mode: "fork",
@@ -42,25 +42,5 @@ module.exports = {
       // 健康检查（如果应用有健康检查端点）
       // health_check_grace_period: 3000,
     },
-    // 如果需要运行 webhook 服务器，取消下面的注释
-    // {
-    //   name: 'webhook-server',
-    //   script: 'scripts/webhook-server.js',
-    //   cwd: '/var/www/note-book',
-    //   instances: 1,
-    //   exec_mode: 'fork',
-    //   env: {
-    //     NODE_ENV: 'production',
-    //     PORT: 9000,
-    //     WEBHOOK_SECRET: process.env.WEBHOOK_SECRET || 'your-webhook-secret',
-    //     DEPLOY_SCRIPT: '/var/www/note-book/scripts/deploy.sh',
-    //     DEPLOY_BRANCH: 'main',
-    //   },
-    //   error_file: '/var/log/webhook-error.log',
-    //   out_file: '/var/log/webhook-out.log',
-    //   log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-    //   watch: false,
-    //   max_memory_restart: '500M',
-    // },
   ],
 };
