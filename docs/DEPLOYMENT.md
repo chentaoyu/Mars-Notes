@@ -97,7 +97,7 @@ nano .env  # 或使用你喜欢的编辑器
 
 ```env
 # 数据库连接
-DATABASE_URL="postgresql://postgres:password@localhost:5432/notedb?schema=public"
+DATABASE_URL="postgresql://postgres@localhost:5432/notebook?schema=public"
 
 # NextAuth.js 配置
 NEXTAUTH_URL="http://localhost:3000"
@@ -129,11 +129,11 @@ brew install postgresql@14
 brew services start postgresql@14
 
 # 创建数据库
-createdb notedb
+createdb notebook
 
 # 或使用 psql
 psql postgres
-CREATE DATABASE notedb;
+CREATE DATABASE notebook;
 \q
 ```
 
@@ -148,7 +148,7 @@ npm i -g vercel
 vercel login
 
 # 创建 Postgres 数据库
-vercel postgres create notedb
+vercel postgres create notebook
 
 # 获取连接字符串并添加到 .env
 ```
@@ -228,15 +228,14 @@ npx prisma generate     # 生成 Prisma Client
 DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE"
 
 # 方式二：使用变量引用（推荐，更灵活）
-# 首先定义数据库连接的各部分
+# 首先定义数据库连接的各部分（使用默认用户，无需密码）
 POSTGRES_USER="postgres"
-POSTGRES_PASSWORD="your-password"
 POSTGRES_HOST="localhost"
 POSTGRES_PORT="5432"
-POSTGRES_DATABASE="notedb"
+POSTGRES_DB="notebook"
 
-# 然后使用变量引用组合成完整的连接字符串
-DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DATABASE}?schema=public"
+# 然后使用变量引用组合成完整的连接字符串（不带密码）
+DATABASE_URL="postgresql://${POSTGRES_USER}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?schema=public"
 
 # ============================================
 # NextAuth.js 认证配置
@@ -298,19 +297,18 @@ DATABASE_URL="postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME
 
 ```env
 # 方式一：直接配置
-DATABASE_URL="postgresql://postgres:password@localhost:5432/notedb"
+DATABASE_URL="postgresql://postgres@localhost:5432/notebook"
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="dev-secret-key-only-for-development"
 NODE_ENV="development"
 
-# 方式二：使用变量引用（推荐）
+# 方式二：使用变量引用（推荐，使用默认用户无需密码）
 POSTGRES_USER="postgres"
-POSTGRES_PASSWORD="password"
 POSTGRES_HOST="localhost"
 POSTGRES_PORT="5432"
-POSTGRES_DATABASE="notedb"
+POSTGRES_DB="notebook"
 
-DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DATABASE}?schema=public"
+DATABASE_URL="postgresql://${POSTGRES_USER}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?schema=public"
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="dev-secret-key-only-for-development"
 NODE_ENV="development"
@@ -319,7 +317,7 @@ NODE_ENV="development"
 #### **测试环境** (`.env.test`)
 
 ```env
-DATABASE_URL="postgresql://postgres:password@localhost:5432/notedb_test"
+DATABASE_URL="postgresql://postgres@localhost:5432/notebook_test"
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="test-secret-key"
 NODE_ENV="test"
@@ -328,7 +326,7 @@ NODE_ENV="test"
 #### **生产环境** (在部署平台配置)
 
 ```env
-DATABASE_URL="postgresql://user:pass@prod-db.example.com:5432/notedb?sslmode=require"
+DATABASE_URL="postgresql://user@prod-db.example.com:5432/notebook?sslmode=require"
 NEXTAUTH_URL="https://note.yourdomain.com"
 NEXTAUTH_SECRET="生产环境的超长随机密钥"
 NODE_ENV="production"
@@ -410,7 +408,7 @@ npx prisma migrate dev --name add_user_avatar
 # ⚠️ 生产环境请谨慎操作
 
 # 1. 备份数据库
-pg_dump -U postgres notedb > backup_$(date +%Y%m%d_%H%M%S).sql
+pg_dump -U postgres notebook > backup_$(date +%Y%m%d_%H%M%S).sql
 
 # 2. 执行迁移（不会提示确认）
 npx prisma migrate deploy
@@ -429,13 +427,13 @@ npx prisma migrate status
 
 ```bash
 # 1. 更新 .env 文件中的 DATABASE_URL
-# 例如：从 notedb 切换到 notedb_prod
-DATABASE_URL="postgresql://user:password@localhost:5432/notedb_prod"
+# 例如：从 notebook 切换到 notebook_prod
+DATABASE_URL="postgresql://postgres@localhost:5432/notebook_prod"
 
 # 2. 确保新数据库已创建（如果不存在）
-createdb notedb_prod
+createdb notebook_prod
 # 或使用 psql
-psql postgres -c "CREATE DATABASE notedb_prod;"
+psql postgres -c "CREATE DATABASE notebook_prod;"
 
 # 3. 生成 Prisma Client（使用新的数据库连接）
 npx prisma generate
@@ -453,20 +451,20 @@ npx prisma migrate status
 
 ```bash
 # 1. 备份旧数据库
-pg_dump -U postgres -d notedb > backup_$(date +%Y%m%d_%H%M%S).sql
+pg_dump -U postgres -d notebook > backup_$(date +%Y%m%d_%H%M%S).sql
 
 # 2. 创建新数据库
-createdb notedb_prod
+createdb notebook_prod
 
 # 3. 先应用迁移到新数据库（创建表结构）
-DATABASE_URL="postgresql://user:password@localhost:5432/notedb_prod" npx prisma migrate deploy
+DATABASE_URL="postgresql://postgres@localhost:5432/notebook_prod" npx prisma migrate deploy
 
 # 4. 迁移数据（只迁移数据，不迁移结构）
-pg_dump -U postgres -d notedb --data-only --inserts | \
-  psql -U postgres -d notedb_prod
+pg_dump -U postgres -d notebook --data-only --inserts | \
+  psql -U postgres -d notebook_prod
 
 # 5. 更新 .env 文件
-DATABASE_URL="postgresql://user:password@localhost:5432/notedb_prod"
+DATABASE_URL="postgresql://postgres@localhost:5432/notebook_prod"
 
 # 6. 重新生成 Prisma Client
 npx prisma generate
@@ -481,7 +479,7 @@ npx prisma studio
 
 ```bash
 # 1. 更新 docker-compose.yml 或 .env 文件
-POSTGRES_DB=notedb_prod
+POSTGRES_DB=notebook_prod
 
 # 2. 重启 PostgreSQL 容器（如果数据库不存在会自动创建）
 docker-compose down
@@ -491,7 +489,7 @@ docker-compose up -d postgres
 sleep 5
 
 # 4. 更新应用的 DATABASE_URL
-DATABASE_URL="postgresql://postgres:password@localhost:5432/notedb_prod"
+DATABASE_URL="postgresql://postgres@localhost:5432/notebook_prod"
 
 # 5. 应用迁移
 npx prisma migrate deploy
@@ -510,7 +508,7 @@ npx prisma migrate status
 npx prisma studio
 
 # 3. 连接数据库验证
-psql -U postgres -d notedb_prod
+psql -U postgres -d notebook_prod
 # 在 psql 中执行：
 \dt          # 列出所有表
 SELECT COUNT(*) FROM users;  # 验证数据
@@ -534,10 +532,10 @@ npx prisma migrate resolve --applied 20251104152414_add_notebooks_and_tags
 pg_isready -U postgres
 
 # 检查数据库是否存在
-psql -U postgres -l | grep notedb_prod
+psql -U postgres -l | grep notebook_prod
 
 # 测试连接
-psql -U postgres -d notedb_prod -c "SELECT version();"
+psql -U postgres -d notebook_prod -c "SELECT version();"
 ```
 
 **问题 3: 迁移文件冲突**
@@ -560,7 +558,7 @@ cat prisma/migrations/migration_lock.toml
 
 ```bash
 # 查看迁移历史表
-psql -U postgres -d notedb_prod -c "SELECT * FROM _prisma_migrations ORDER BY finished_at;"
+psql -U postgres -d notebook_prod -c "SELECT * FROM _prisma_migrations ORDER BY finished_at;"
 ```
 
 ### 4.4 数据库连接池
@@ -1054,7 +1052,7 @@ export async function GET() {
 
 BACKUP_DIR="/backups/postgres"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-DB_NAME="notedb"
+DB_NAME="notebook"
 
 # 创建备份目录
 mkdir -p $BACKUP_DIR

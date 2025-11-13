@@ -49,15 +49,14 @@ NODE_ENV="development"
 **方式二：使用变量引用（推荐，更灵活）**
 
 ```env
-# 数据库配置（基础变量）
+# 数据库配置（基础变量，使用默认用户无需密码）
 POSTGRES_USER=postgres
-POSTGRES_PASSWORD=password
 POSTGRES_DB=notebook
 POSTGRES_PORT=5432
 POSTGRES_HOST=localhost
 
-# 使用变量引用自动组合连接字符串
-DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?schema=public"
+# 使用变量引用自动组合连接字符串（不带密码）
+DATABASE_URL="postgresql://${POSTGRES_USER}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?schema=public"
 
 # NextAuth.js 配置
 NEXTAUTH_URL="http://localhost:3000"
