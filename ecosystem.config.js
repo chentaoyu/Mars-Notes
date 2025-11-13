@@ -9,7 +9,7 @@
  */
 
 // 加载环境变量
-require('./load-env');
+require("./load-env");
 
 module.exports = {
   apps: [
@@ -17,7 +17,7 @@ module.exports = {
       // 主应用
       name: "mars-notes",
       script: "node",
-      args: "scripts/start-server.js",
+      args: "./start-server.js",
       cwd: "/var/www/note-book",
       instances: 1,
       exec_mode: "fork",

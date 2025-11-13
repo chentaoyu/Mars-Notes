@@ -7,7 +7,7 @@
     "dev": "next dev --turbo",
     "dev:legacy": "next dev",
     "build": "next build && mkdir -p .next/standalone/.next && cp -r .next/static .next/standalone/.next/",
-    "start": "node scripts/start-server.js",
+    "start": "node start-server.js",
     "start:pm2": "pm2 start ecosystem.config.js",
     "stop:pm2": "pm2 stop ecosystem.config.js",
     "restart:pm2": "pm2 restart ecosystem.config.js",
