@@ -12,7 +12,7 @@ const { spawn } = require("child_process");
 require("./load-env");
 
 // 获取 standalone server 路径
-const serverPath = path.join(__dirname, "../.next/standalone/server.js");
+const serverPath = path.join(__dirname, ".next/standalone/server.js");
 
 // 启动服务器
 const server = spawn("node", [serverPath], {
