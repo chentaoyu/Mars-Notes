@@ -142,8 +142,44 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
     };
 
     return NextResponse.json(formattedNote);
-  } catch (error) {
+  } catch (error: any) {
     console.error("更新笔记失败:", error);
+    
+    // 处理外键约束错误
+    if (error.code === "P2003") {
+      const field = error.meta?.field_name || "unknown";
+      if (field.includes("user_id")) {
+        return NextResponse.json(
+          { 
+            error: "User not found", 
+            message: "用户不存在，请重新登录",
+            code: "USER_NOT_FOUND" 
+          },
+          { status: 404 }
+        );
+      }
+      if (field.includes("notebook_id")) {
+        return NextResponse.json(
+          { 
+            error: "Notebook not found", 
+            message: "笔记本不存在",
+            code: "NOTEBOOK_NOT_FOUND" 
+          },
+          { status: 404 }
+        );
+      }
+      if (field.includes("tag_id")) {
+        return NextResponse.json(
+          { 
+            error: "Tag not found", 
+            message: "标签不存在",
+            code: "TAG_NOT_FOUND" 
+          },
+          { status: 404 }
+        );
+      }
+    }
+    
     return NextResponse.json(
       { error: "Internal server error", code: "INTERNAL_ERROR" },
       { status: 500 }

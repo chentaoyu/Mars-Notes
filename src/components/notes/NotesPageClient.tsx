@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Note, NoteSortBy, NoteSortOrder } from "@/types";
 import { NoteList } from "@/components/notes/NoteList";
 import { SortSelector } from "@/components/notes/SortSelector";
-import { NotebookList } from "@/components/notebooks/NotebookList";
-import { TagList } from "@/components/tags/TagList";
+import { FinderSidebar } from "@/components/sidebar/FinderSidebar";
 import { Button } from "@/components/ui/button";
 import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
 import { Menu, X } from "lucide-react";
@@ -25,11 +24,7 @@ export function NotesPageClient() {
   const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  useEffect(() => {
-    fetchNotes();
-  }, [search, selectedNotebookId, selectedTagIds, sortBy, sortOrder]);
-
-  const fetchNotes = async () => {
+  const fetchNotes = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
@@ -51,7 +46,11 @@ export function NotesPageClient() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [search, selectedNotebookId, selectedTagIds, sortBy, sortOrder]);
+
+  useEffect(() => {
+    fetchNotes();
+  }, [fetchNotes]);
 
   const handleCreateNote = async () => {
     try {
@@ -114,8 +113,7 @@ export function NotesPageClient() {
       <div
         className={`
           fixed lg:relative inset-y-0 left-0 z-50
-          w-64 border-r bg-gray-50 dark:bg-gray-900 
-          flex flex-col h-full
+          w-64 flex flex-col h-full
           transform transition-all duration-300 ease-in-out
           ${showSidebar ? "translate-x-0" : "-translate-x-full"}
           ${showSidebar ? "lg:w-64" : "lg:w-0 lg:border-0 lg:overflow-hidden"}
@@ -132,29 +130,25 @@ export function NotesPageClient() {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className="space-y-6">
-            <NotebookList
-              selectedNotebookId={selectedNotebookId}
-              onSelectNotebook={(id) => {
-                setSelectedNotebookId(id);
-                // 移动端选择后自动关闭侧边栏
-                if (window.innerWidth < 1024) {
-                  setShowSidebar(false);
-                }
-              }}
-            />
-            <TagList
-              selectedTagIds={selectedTagIds}
-              onSelectTags={(ids) => {
-                setSelectedTagIds(ids);
-                // 移动端选择后自动关闭侧边栏
-                if (window.innerWidth < 1024) {
-                  setShowSidebar(false);
-                }
-              }}
-            />
-          </div>
+        <div className="flex-1 overflow-y-auto">
+          <FinderSidebar
+            selectedNotebookId={selectedNotebookId}
+            selectedTagIds={selectedTagIds}
+            onSelectNotebook={(id) => {
+              setSelectedNotebookId(id);
+              // 移动端选择后自动关闭侧边栏
+              if (window.innerWidth < 1024) {
+                setShowSidebar(false);
+              }
+            }}
+            onSelectTags={(ids) => {
+              setSelectedTagIds(ids);
+              // 移动端选择后自动关闭侧边栏
+              if (window.innerWidth < 1024) {
+                setShowSidebar(false);
+              }
+            }}
+          />
         </div>
       </div>
 

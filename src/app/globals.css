@@ -26,6 +26,11 @@
   color: rgb(250 250 250);
 }
 
+/* 隐藏预览区域的操作按钮 */
+.vditor-preview__action {
+  display: none !important;
+}
+
 /* 移动端优化 */
 @media (max-width: 768px) {
   .vditor-container .vditor__toolbar {
