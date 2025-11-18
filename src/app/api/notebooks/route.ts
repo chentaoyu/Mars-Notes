@@ -9,6 +9,7 @@ const createNotebookSchema = z.object({
   description: z.string().max(500, "笔记本描述不能超过500个字符").optional(),
   color: z.string().max(20).optional(),
   icon: z.string().max(50).optional(),
+  parentId: z.string().optional().nullable(),
 });
 
 // GET /api/notebooks - 获取用户的所有笔记本
@@ -21,19 +22,33 @@ export async function GET(request: NextRequest) {
 
     const userId = session.user.id;
 
-    // 获取笔记本列表，包含笔记数量
-    const notebooks = await prisma.notebook.findMany({
+    // 获取所有笔记本，包含笔记数量
+    const allNotebooks = await prisma.notebook.findMany({
       where: { userId },
       include: {
         _count: {
-          select: { notes: true },
+          select: { 
+            notes: true,
+          },
         },
       },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
     });
 
+    // 构建树形结构
+    const buildTree = (parentId: string | null = null): any[] => {
+      return allNotebooks
+        .filter((nb) => nb.parentId === parentId)
+        .map((notebook) => ({
+          ...notebook,
+          children: buildTree(notebook.id),
+        }));
+    };
+
+    const tree = buildTree();
+
     return NextResponse.json({
-      data: notebooks,
+      data: tree,
       message: "获取笔记本列表成功",
     });
   } catch (error) {
@@ -66,13 +81,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { name, description, color, icon } = result.data;
+    const { name, description, color, icon, parentId } = result.data;
 
-    // 检查是否已存在同名笔记本
+    // 如果指定了 parentId，验证父笔记本存在且属于当前用户
+    if (parentId) {
+      const parentNotebook = await prisma.notebook.findUnique({
+        where: { id: parentId },
+      });
+
+      if (!parentNotebook || parentNotebook.userId !== userId) {
+        return NextResponse.json(
+          { error: "父笔记本不存在或无权限", code: "PARENT_NOT_FOUND" },
+          { status: 400 }
+        );
+      }
+    }
+
+    // 检查是否已存在同名笔记本（在同一父级下）
     const existingNotebook = await prisma.notebook.findFirst({
       where: {
         userId,
         name,
+        parentId: parentId || null,
       },
     });
 
@@ -83,9 +113,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 获取当前最大的 sortOrder
+    // 获取当前最大的 sortOrder（在同一父级下）
     const maxSortOrder = await prisma.notebook.findFirst({
-      where: { userId },
+      where: { 
+        userId,
+        parentId: parentId || null,
+      },
       orderBy: { sortOrder: "desc" },
       select: { sortOrder: true },
     });
@@ -98,11 +131,14 @@ export async function POST(request: NextRequest) {
         description,
         color,
         icon,
+        parentId: parentId || null,
         sortOrder: (maxSortOrder?.sortOrder ?? -1) + 1,
       },
       include: {
         _count: {
-          select: { notes: true },
+          select: { 
+            notes: true,
+          },
         },
       },
     });

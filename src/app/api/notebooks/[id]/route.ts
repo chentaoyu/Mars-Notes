@@ -27,7 +27,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       where: { id: notebookId },
       include: {
         _count: {
-          select: { notes: true },
+          select: { 
+            notes: true,
+          },
         },
       },
     });
@@ -98,12 +100,13 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     const { name, description, color, icon, sortOrder } = result.data;
 
-    // 如果更新名称，检查是否已存在同名笔记本
+    // 如果更新名称，检查是否已存在同名笔记本（在同一父级下）
     if (name && name !== existingNotebook.name) {
       const duplicateNotebook = await prisma.notebook.findFirst({
         where: {
           userId,
           name,
+          parentId: existingNotebook.parentId,
           id: { not: notebookId },
         },
       });
@@ -162,7 +165,9 @@ export async function DELETE(
       where: { id: notebookId },
       include: {
         _count: {
-          select: { notes: true },
+          select: { 
+            notes: true,
+          },
         },
       },
     });
@@ -178,11 +183,15 @@ export async function DELETE(
       return NextResponse.json({ error: "无权访问此笔记本", code: "FORBIDDEN" }, { status: 403 });
     }
 
-    // 检查是否有笔记
-    if (notebook._count.notes > 0) {
+    // 检查是否有笔记或子笔记本
+    const childrenCount = await prisma.notebook.count({
+      where: { parentId: notebookId },
+    });
+    
+    if (notebook._count.notes > 0 || childrenCount > 0) {
       return NextResponse.json(
         {
-          error: "笔记本中还有笔记，无法删除",
+          error: "笔记本中还有笔记或子笔记本，无法删除",
           code: "NOTEBOOK_NOT_EMPTY",
         },
         { status: 400 }

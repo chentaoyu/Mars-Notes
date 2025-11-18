@@ -1,15 +1,13 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
 import { useDebounce } from "@/hooks/useDebounce";
 import { AutoSaveIndicator } from "./AutoSaveIndicator";
 import { VditorEditor } from "./VditorEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
-import { ArrowLeft, Trash2, Book, Tag as TagIcon } from "lucide-react";
-import Link from "next/link";
+import { Trash2, Book, Tag as TagIcon } from "lucide-react";
 import { Tag, Notebook } from "@/types";
 import { TagSelector } from "@/components/tags/TagSelector";
 
@@ -19,6 +17,8 @@ interface MarkdownEditorProps {
   initialContent: string;
   initialNotebookId?: string;
   initialTags?: Tag[];
+  onDelete?: () => void;
+  onSave?: () => void;
 }
 
 export function MarkdownEditor({
@@ -27,8 +27,9 @@ export function MarkdownEditor({
   initialContent,
   initialNotebookId,
   initialTags = [],
+  onDelete,
+  onSave,
 }: MarkdownEditorProps) {
-  const router = useRouter();
   const [title, setTitle] = useState(initialTitle);
   const [content, setContent] = useState(initialContent);
   const [notebookId, setNotebookId] = useState<string | undefined>(initialNotebookId);
@@ -51,6 +52,14 @@ export function MarkdownEditor({
   // 防抖，2 秒后自动保存
   const debouncedContent = useDebounce(content, 1000);
   const debouncedTitle = useDebounce(title, 1000);
+
+  // 当 noteId 或初始值改变时，更新编辑器状态
+  useEffect(() => {
+    setTitle(initialTitle);
+    setContent(initialContent);
+    setNotebookId(initialNotebookId);
+    setTagIds(initialTags.map((t) => t.id));
+  }, [noteId, initialTitle, initialContent, initialNotebookId, initialTags]);
 
   // 加载笔记本列表
   useEffect(() => {
@@ -87,6 +96,7 @@ export function MarkdownEditor({
           }),
         });
         setLastSaved(new Date());
+        onSave?.();
       } catch (error) {
         console.error("保存失败:", error);
       } finally {
@@ -221,8 +231,8 @@ export function MarkdownEditor({
       await fetch(`/api/notes/${noteId}`, {
         method: "DELETE",
       });
-      router.push("/notes");
-      router.refresh();
+      onDelete?.();
+      setDeleteDialogOpen(false);
     } catch (error) {
       console.error("删除失败:", error);
       setIsDeleting(false);
@@ -238,13 +248,6 @@ export function MarkdownEditor({
       <div className="border-b">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-2 sm:px-4 py-2 sm:py-3 gap-2">
           <div className="flex items-center gap-1 sm:gap-2 w-full sm:w-auto">
-            <Link href="/notes">
-              <Button variant="ghost" size="sm" className="h-8 sm:h-9">
-                <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
-                <span className="hidden sm:inline">返回</span>
-              </Button>
-            </Link>
-            <div className="h-6 w-px bg-border hidden sm:block" />
             <Input
               type="text"
               value={title}

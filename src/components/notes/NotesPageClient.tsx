@@ -1,17 +1,14 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { Note, NoteSortBy, NoteSortOrder } from "@/types";
-import { NoteList } from "@/components/notes/NoteList";
-import { SortSelector } from "@/components/notes/SortSelector";
 import { FinderSidebar } from "@/components/sidebar/FinderSidebar";
+import { MarkdownEditor } from "@/components/editor/MarkdownEditor";
 import { Button } from "@/components/ui/button";
 import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
 import { Menu, X } from "lucide-react";
 
 export function NotesPageClient() {
-  const router = useRouter();
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -20,9 +17,66 @@ export function NotesPageClient() {
   const [sortBy, setSortBy] = useState<NoteSortBy>("updatedAt");
   const [sortOrder, setSortOrder] = useState<NoteSortOrder>("desc");
   const [showSidebar, setShowSidebar] = useState(true);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [currentNoteId, setCurrentNoteId] = useState<string | null>(null);
+  const [currentNote, setCurrentNote] = useState<Note | null>(null);
+  const [hasCheckedFirstNote, setHasCheckedFirstNote] = useState(false);
+
+  // 检查并自动创建/显示第一个笔记（仅在首次加载时，且没有任何筛选条件）
+  useEffect(() => {
+    // 如果已经检查过，直接返回（这是最重要的检查，确保只执行一次）
+    if (hasCheckedFirstNote) {
+      return;
+    }
+
+    // 如果正在加载，或者已有当前笔记，或者有筛选条件，不执行
+    if (loading || currentNoteId || search || selectedNotebookId || selectedTagIds.length > 0) {
+      return;
+    }
+
+    const checkAndShowFirstNote = async () => {
+      // 如果没有笔记，自动创建第一个笔记
+      if (notes.length === 0) {
+        setHasCheckedFirstNote(true);
+        try {
+          const createResponse = await fetch("/api/notes", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              title: "欢迎使用 Mars-Notes",
+              content: "# 欢迎使用 Mars-Notes\n\n这是你的第一篇笔记，开始记录你的想法吧！",
+              notebookId: null,
+            }),
+          });
+
+          if (createResponse.ok) {
+            const newNote = await createResponse.json();
+            setCurrentNoteId(newNote.id);
+            setCurrentNote(newNote);
+            await fetchNotes(); // 刷新笔记列表
+          }
+        } catch (error) {
+          console.error("创建欢迎笔记失败:", error);
+        }
+      } else if (notes.length > 0) {
+        // 如果有笔记，默认显示第一个笔记（仅首次加载）
+        setHasCheckedFirstNote(true);
+        const firstNote = notes[0];
+        setCurrentNoteId(firstNote.id);
+        setCurrentNote(firstNote);
+      }
+    };
+
+    checkAndShowFirstNote();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    notes.length,
+    hasCheckedFirstNote,
+    loading,
+    currentNoteId,
+    search,
+    selectedNotebookId,
+    selectedTagIds.length,
+  ]);
 
   const fetchNotes = useCallback(async () => {
     try {
@@ -39,7 +93,25 @@ export function NotesPageClient() {
       const result = await response.json();
 
       if (response.ok) {
-        setNotes(result.data || []);
+        const fetchedNotes = result.data || [];
+        setNotes(fetchedNotes);
+
+        // 如果当前笔记不在新的列表中，清除当前笔记（但不自动切换到新列表的第一个）
+        setCurrentNoteId((prevId) => {
+          if (prevId && !fetchedNotes.find((n: Note) => n.id === prevId)) {
+            // 当前笔记不在新列表中，清除它
+            setCurrentNote(null);
+            return null;
+          } else if (prevId) {
+            // 如果当前笔记在新列表中，更新笔记对象（可能数据有变化）
+            const note = fetchedNotes.find((n: Note) => n.id === prevId);
+            if (note) {
+              setCurrentNote(note);
+            }
+          }
+          // 保持当前笔记ID不变，不自动切换到新列表的第一个笔记
+          return prevId;
+        });
       }
     } catch (error) {
       console.error("获取笔记列表失败:", error);
@@ -66,36 +138,59 @@ export function NotesPageClient() {
 
       if (response.ok) {
         const note = await response.json();
-        router.push(`/editor/${note.id}`);
+        setCurrentNoteId(note.id);
+        setCurrentNote(note);
+        await fetchNotes(); // 刷新笔记列表
       }
     } catch (error) {
       console.error("创建笔记失败:", error);
     }
   };
 
-  const handleDeleteNote = (noteId: string) => {
-    setNoteToDelete(noteId);
-    setDeleteDialogOpen(true);
+  const handleNoteSelect = async (noteId: string) => {
+    // 先设置当前笔记ID，立即响应
+    setCurrentNoteId(noteId);
+
+    // 尝试从当前笔记列表中找到笔记
+    const note = notes.find((n) => n.id === noteId);
+    if (note) {
+      setCurrentNote(note);
+    } else {
+      // 如果不在列表中，从API获取完整笔记数据
+      try {
+        const response = await fetch(`/api/notes/${noteId}`);
+        if (response.ok) {
+          const noteData = await response.json();
+          setCurrentNote(noteData);
+        } else {
+          // 如果获取失败，清除当前笔记ID
+          setCurrentNoteId(null);
+          setCurrentNote(null);
+        }
+      } catch (error) {
+        console.error("获取笔记失败:", error);
+        setCurrentNoteId(null);
+        setCurrentNote(null);
+      }
+    }
   };
 
-  const confirmDelete = async () => {
-    if (!noteToDelete) return;
-
+  const handleNoteDelete = async (noteId: string) => {
     try {
-      setIsDeleting(true);
-      const response = await fetch(`/api/notes/${noteToDelete}`, {
+      const response = await fetch(`/api/notes/${noteId}`, {
         method: "DELETE",
       });
 
       if (response.ok) {
-        setNotes(notes.filter((note) => note.id !== noteToDelete));
-        setDeleteDialogOpen(false);
-        setNoteToDelete(null);
+        // 如果删除的是当前笔记，清除当前笔记
+        if (currentNoteId === noteId) {
+          setCurrentNoteId(null);
+          setCurrentNote(null);
+        }
+        await fetchNotes(); // 刷新笔记列表
       }
     } catch (error) {
       console.error("删除笔记失败:", error);
-    } finally {
-      setIsDeleting(false);
     }
   };
 
@@ -134,6 +229,11 @@ export function NotesPageClient() {
           <FinderSidebar
             selectedNotebookId={selectedNotebookId}
             selectedTagIds={selectedTagIds}
+            search={search}
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+            notes={notes}
+            currentNoteId={currentNoteId}
             onSelectNotebook={(id) => {
               setSelectedNotebookId(id);
               // 移动端选择后自动关闭侧边栏
@@ -148,83 +248,50 @@ export function NotesPageClient() {
                 setShowSidebar(false);
               }
             }}
+            onSelectNote={(noteId) => {
+              handleNoteSelect(noteId);
+              // 移动端选择后自动关闭侧边栏
+              if (window.innerWidth < 1024) {
+                setShowSidebar(false);
+              }
+            }}
+            onCreateNote={handleCreateNote}
+            onSearchChange={setSearch}
+            onSortChange={(newSortBy, newSortOrder) => {
+              setSortBy(newSortBy);
+              setSortOrder(newSortOrder);
+            }}
           />
         </div>
       </div>
 
       {/* 主内容区 */}
-      <div className="flex-1 overflow-y-auto h-full w-full">
-        <div className="max-w-6xl mx-auto p-4 sm:p-6">
-          {/* 顶部工具栏 */}
-          <div className="mb-6 space-y-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
-                <button
-                  onClick={() => setShowSidebar(!showSidebar)}
-                  className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 flex items-center gap-1 sm:gap-2"
-                >
-                  <Menu className="h-5 w-5" />
-                  <span className="text-sm sm:text-base">菜单</span>
-                </button>
-                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
-                  {selectedNotebookId ? "笔记本" : "我的笔记"}
-                </h2>
-              </div>
-              <Button onClick={handleCreateNote} className="w-full sm:w-auto">
-                新建笔记
-              </Button>
-            </div>
-
-            {/* 搜索和排序 */}
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="搜索笔记..."
-                className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700 text-sm sm:text-base"
-              />
-              <SortSelector
-                sortBy={sortBy}
-                sortOrder={sortOrder}
-                onSortChange={(newSortBy, newSortOrder) => {
-                  setSortBy(newSortBy);
-                  setSortOrder(newSortOrder);
-                }}
-              />
-            </div>
-
-            {/* 活动筛选标签 */}
-            {(selectedNotebookId || selectedTagIds.length > 0) && (
-              <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
-                <span className="text-gray-600 dark:text-gray-400">筛选条件：</span>
-                {selectedNotebookId && (
-                  <button
-                    onClick={() => setSelectedNotebookId(null)}
-                    className="px-2 sm:px-3 py-1 bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 dark:bg-blue-900/20 dark:text-blue-300 whitespace-nowrap"
-                  >
-                    笔记本 ×
-                  </button>
-                )}
-                {selectedTagIds.length > 0 && (
-                  <button
-                    onClick={() => setSelectedTagIds([])}
-                    className="px-2 sm:px-3 py-1 bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 dark:bg-blue-900/20 dark:text-blue-300 whitespace-nowrap"
-                  >
-                    {selectedTagIds.length} 个标签 ×
-                  </button>
-                )}
-              </div>
-            )}
-
-            <p className="text-muted-foreground text-xs sm:text-sm">共 {notes.length} 篇笔记</p>
+      <div className="flex-1 h-full w-full flex flex-col overflow-hidden">
+        {loading && !currentNote ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center text-gray-500">加载中...</div>
           </div>
-
-          {/* 笔记列表 */}
-          {loading ? (
-            <div className="text-center py-12 text-gray-500">加载中...</div>
-          ) : notes.length === 0 ? (
-            <div className="text-center py-12">
+        ) : currentNote ? (
+          <div className="flex-1 h-full overflow-hidden">
+            <MarkdownEditor
+              noteId={currentNote.id}
+              initialTitle={currentNote.title}
+              initialContent={currentNote.content}
+              initialNotebookId={currentNote.notebookId || undefined}
+              initialTags={currentNote.tags || []}
+              onDelete={() => {
+                setCurrentNoteId(null);
+                setCurrentNote(null);
+                fetchNotes();
+              }}
+              onSave={() => {
+                fetchNotes();
+              }}
+            />
+          </div>
+        ) : (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
               <p className="text-gray-500 mb-4">
                 {search || selectedNotebookId || selectedTagIds.length > 0
                   ? "没有找到匹配的笔记"
@@ -234,19 +301,9 @@ export function NotesPageClient() {
                 <Button onClick={handleCreateNote}>创建第一篇笔记</Button>
               )}
             </div>
-          ) : (
-            <NoteList notes={notes} onDelete={handleDeleteNote} />
-          )}
-        </div>
+          </div>
+        )}
       </div>
-
-      {/* 删除确认对话框 */}
-      <DeleteConfirmDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        onConfirm={confirmDelete}
-        isDeleting={isDeleting}
-      />
     </div>
   );
 }

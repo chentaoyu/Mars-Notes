@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Notebook, Tag } from "@/types";
+import { Notebook, Tag, Note } from "@/types";
 import { Button } from "@/components/ui/button";
 import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
 import {
@@ -12,14 +12,36 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Folder, FolderOpen, Plus, Trash2, Edit2, Tag as TagIcon } from "lucide-react";
+import {
+  Folder,
+  FolderOpen,
+  Plus,
+  Trash2,
+  Edit2,
+  Tag as TagIcon,
+  ChevronRight,
+  ChevronDown,
+  Search,
+  FileText,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NoteSortBy, NoteSortOrder } from "@/types";
+import { SortSelector } from "@/components/notes/SortSelector";
 
 interface FinderSidebarProps {
   selectedNotebookId?: string | null;
   selectedTagIds?: string[];
+  search?: string;
+  sortBy?: NoteSortBy;
+  sortOrder?: NoteSortOrder;
+  notes?: Note[];
+  currentNoteId?: string | null;
   onSelectNotebook: (notebookId: string | null) => void;
   onSelectTags: (tagIds: string[]) => void;
+  onSelectNote?: (noteId: string) => void;
+  onCreateNote?: () => void;
+  onSearchChange?: (search: string) => void;
+  onSortChange?: (sortBy: NoteSortBy, sortOrder: NoteSortOrder) => void;
 }
 
 // macOS 风格的标签颜色
@@ -36,8 +58,17 @@ const TAG_COLORS = [
 export function FinderSidebar({
   selectedNotebookId,
   selectedTagIds = [],
+  search = "",
+  sortBy = "updatedAt",
+  sortOrder = "desc",
+  notes = [],
+  currentNoteId = null,
   onSelectNotebook,
   onSelectTags,
+  onSelectNote,
+  onCreateNote,
+  onSearchChange,
+  onSortChange,
 }: FinderSidebarProps) {
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
@@ -51,6 +82,8 @@ export function FinderSidebar({
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingNotebook, setEditingNotebook] = useState<Notebook | null>(null);
   const [hoveredNotebookId, setHoveredNotebookId] = useState<string | null>(null);
+  const [expandedNotebooks, setExpandedNotebooks] = useState<Set<string>>(new Set());
+  const [createParentId, setCreateParentId] = useState<string | null>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -92,19 +125,24 @@ export function FinderSidebar({
     name: string,
     description?: string,
     color?: string,
-    icon?: string
+    icon?: string,
+    parentId?: string | null
   ) => {
     try {
       const response = await fetch("/api/notebooks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, description, color, icon }),
+        body: JSON.stringify({ name, description, color, icon, parentId }),
       });
 
       if (response.ok) {
-        const result = await response.json();
-        setNotebooks([...notebooks, result.data]);
+        await fetchData(); // 重新获取数据以更新树形结构
         setCreateDialogOpen(false);
+        setCreateParentId(null);
+        // 如果创建了子笔记本，展开父笔记本
+        if (parentId) {
+          setExpandedNotebooks((prev) => new Set(prev).add(parentId));
+        }
       } else {
         const error = await response.json();
         alert(error.error || "创建笔记本失败");
@@ -130,8 +168,7 @@ export function FinderSidebar({
       });
 
       if (response.ok) {
-        const result = await response.json();
-        setNotebooks(notebooks.map((nb) => (nb.id === id ? result.data : nb)));
+        await fetchData(); // 重新获取数据以更新树形结构
         setEditDialogOpen(false);
         setEditingNotebook(null);
         setEditingNotebookId(null);
@@ -160,7 +197,7 @@ export function FinderSidebar({
       });
 
       if (response.ok) {
-        setNotebooks(notebooks.filter((nb) => nb.id !== notebookToDelete));
+        await fetchData(); // 重新获取数据以更新树形结构
         if (selectedNotebookId === notebookToDelete) {
           onSelectNotebook(null);
         }
@@ -205,6 +242,151 @@ export function FinderSidebar({
     }
   };
 
+  const toggleExpand = (notebookId: string) => {
+    setExpandedNotebooks((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(notebookId)) {
+        newSet.delete(notebookId);
+      } else {
+        newSet.add(notebookId);
+      }
+      return newSet;
+    });
+  };
+
+  // 递归渲染笔记本树
+  const renderNotebookTree = (notebooks: Notebook[], level: number = 0) => {
+    return notebooks.map((notebook) => {
+      const isSelected = selectedNotebookId === notebook.id;
+      const isEditing = editingNotebookId === notebook.id;
+      const isHovered = hoveredNotebookId === notebook.id;
+      const isExpanded = expandedNotebooks.has(notebook.id);
+      const hasChildren = notebook.children && notebook.children.length > 0;
+      const hasNotes = notebook._count && notebook._count.notes > 0;
+      const childrenCount = notebook.children ? notebook.children.length : 0;
+
+      return (
+        <div key={notebook.id}>
+          <div
+            className={cn(
+              "group relative px-2 py-1.5 rounded-md text-sm transition-colors flex items-center gap-2",
+              isSelected
+                ? "bg-blue-100 text-blue-900 dark:bg-blue-900/30 dark:text-blue-300"
+                : "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
+            )}
+            style={{ paddingLeft: `${8 + level * 16}px` }}
+            onMouseEnter={() => setHoveredNotebookId(notebook.id)}
+            onMouseLeave={() => setHoveredNotebookId(null)}
+            onClick={() => !isEditing && onSelectNotebook(notebook.id)}
+          >
+            {isEditing ? (
+              <input
+                ref={editInputRef}
+                type="text"
+                value={editingName}
+                onChange={(e) => setEditingName(e.target.value)}
+                onBlur={() => handleInlineEditSubmit(notebook.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleInlineEditSubmit(notebook.id);
+                  } else if (e.key === "Escape") {
+                    setEditingNotebookId(null);
+                    setEditingName("");
+                  }
+                }}
+                className="flex-1 px-1 py-0.5 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
+                onClick={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <>
+                {hasChildren ? (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleExpand(notebook.id);
+                    }}
+                    className="shrink-0 p-0.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                  >
+                    {isExpanded ? (
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    ) : (
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    )}
+                  </button>
+                ) : (
+                  <div className="w-4 shrink-0" />
+                )}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {notebook.icon ? (
+                    <span className="text-base">{notebook.icon}</span>
+                  ) : isSelected ? (
+                    <FolderOpen className="h-4 w-4" />
+                  ) : (
+                    <Folder className="h-4 w-4" />
+                  )}
+                  {notebook.color && (
+                    <div
+                      className="w-2 h-2 rounded-full shrink-0"
+                      style={{ backgroundColor: notebook.color }}
+                      title="标记"
+                    />
+                  )}
+                </div>
+                <span className="flex-1 truncate">{notebook.name}</span>
+                {(hasNotes || hasChildren) && (
+                  <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">
+                    {hasNotes ? notebook._count?.notes : ""}
+                    {hasNotes && hasChildren ? "/" : ""}
+                    {hasChildren ? childrenCount : ""}
+                  </span>
+                )}
+                {isHovered && (
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCreateParentId(notebook.id);
+                        setCreateDialogOpen(true);
+                      }}
+                      className="p-0.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                      title="创建子笔记本"
+                    >
+                      <Plus className="h-3 w-3" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingNotebook(notebook);
+                        setEditDialogOpen(true);
+                      }}
+                      className="p-0.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                      title="编辑"
+                    >
+                      <Edit2 className="h-3 w-3" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteNotebook(notebook.id);
+                      }}
+                      className="p-0.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-red-600 dark:text-red-400"
+                      title="删除"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+          {hasChildren && isExpanded && (
+            <div className="ml-0">{renderNotebookTree(notebook.children || [], level + 1)}</div>
+          )}
+        </div>
+      );
+    });
+  };
+
   if (loading) {
     return (
       <div className="p-4 text-center text-sm text-gray-500 dark:text-gray-400">加载中...</div>
@@ -213,6 +395,29 @@ export function FinderSidebar({
 
   return (
     <div className="flex flex-col h-full bg-gray-50/50 dark:bg-gray-900/50 border-r border-gray-200 dark:border-gray-800">
+      {/* 搜索和排序区域 */}
+      <div className="p-3 border-b border-gray-200 dark:border-gray-800 space-y-2">
+        {onCreateNote && (
+          <Button onClick={onCreateNote} className="w-full h-8 text-sm" size="sm">
+            <Plus className="h-3.5 w-3.5 mr-1.5" />
+            新建笔记
+          </Button>
+        )}
+        <div className="relative">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => onSearchChange?.(e.target.value)}
+            placeholder="搜索笔记..."
+            className="w-full pl-8 pr-2 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
+          />
+        </div>
+        {onSortChange && (
+          <SortSelector sortBy={sortBy} sortOrder={sortOrder} onSortChange={onSortChange} />
+        )}
+      </div>
+
       {/* 笔记本部分 */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-3">
@@ -246,98 +451,7 @@ export function FinderSidebar({
           </button>
 
           {/* 笔记本列表 */}
-          <div className="mt-1 space-y-0.5">
-            {notebooks.map((notebook) => {
-              const isSelected = selectedNotebookId === notebook.id;
-              const isEditing = editingNotebookId === notebook.id;
-              const isHovered = hoveredNotebookId === notebook.id;
-
-              return (
-                <div
-                  key={notebook.id}
-                  className={cn(
-                    "group relative px-2 py-1.5 rounded-md text-sm transition-colors flex items-center gap-2",
-                    isSelected
-                      ? "bg-blue-100 text-blue-900 dark:bg-blue-900/30 dark:text-blue-300"
-                      : "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
-                  )}
-                  onMouseEnter={() => setHoveredNotebookId(notebook.id)}
-                  onMouseLeave={() => setHoveredNotebookId(null)}
-                  onClick={() => !isEditing && onSelectNotebook(notebook.id)}
-                >
-                  {isEditing ? (
-                    <input
-                      ref={editInputRef}
-                      type="text"
-                      value={editingName}
-                      onChange={(e) => setEditingName(e.target.value)}
-                      onBlur={() => handleInlineEditSubmit(notebook.id)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          handleInlineEditSubmit(notebook.id);
-                        } else if (e.key === "Escape") {
-                          setEditingNotebookId(null);
-                          setEditingName("");
-                        }
-                      }}
-                      className="flex-1 px-1 py-0.5 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  ) : (
-                    <>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        {notebook.icon ? (
-                          <span className="text-base">{notebook.icon}</span>
-                        ) : isSelected ? (
-                          <FolderOpen className="h-4 w-4" />
-                        ) : (
-                          <Folder className="h-4 w-4" />
-                        )}
-                        {notebook.color && (
-                          <div
-                            className="w-2 h-2 rounded-full shrink-0"
-                            style={{ backgroundColor: notebook.color }}
-                            title="标记"
-                          />
-                        )}
-                      </div>
-                      <span className="flex-1 truncate">{notebook.name}</span>
-                      {notebook._count && notebook._count.notes > 0 && (
-                        <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">
-                          {notebook._count.notes}
-                        </span>
-                      )}
-                      {isHovered && (
-                        <div className="flex items-center gap-1 shrink-0">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setEditingNotebook(notebook);
-                              setEditDialogOpen(true);
-                            }}
-                            className="p-0.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
-                            title="编辑"
-                          >
-                            <Edit2 className="h-3 w-3" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteNotebook(notebook.id);
-                            }}
-                            className="p-0.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-red-600 dark:text-red-400"
-                            title="删除"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </button>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          <div className="mt-1 space-y-0.5">{renderNotebookTree(notebooks)}</div>
         </div>
 
         {/* 分隔线 */}
@@ -381,13 +495,56 @@ export function FinderSidebar({
             )}
           </div>
         </div>
+
+        {/* 分隔线 */}
+        <div className="border-t border-gray-200 dark:border-gray-800 my-2" />
+
+        {/* 笔记列表部分 */}
+        {notes.length > 0 && (
+          <div className="p-3">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-2">
+                笔记 ({notes.length})
+              </h3>
+            </div>
+
+            <div className="space-y-0.5 max-h-[300px] overflow-y-auto">
+              {notes.map((note) => {
+                const isSelected = currentNoteId === note.id;
+                return (
+                  <button
+                    key={note.id}
+                    onClick={() => onSelectNote?.(note.id)}
+                    className={cn(
+                      "w-full text-left px-2 py-1.5 rounded-md text-sm transition-colors flex items-center gap-2 group",
+                      isSelected
+                        ? "bg-blue-100 text-blue-900 dark:bg-blue-900/30 dark:text-blue-300"
+                        : "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
+                    )}
+                  >
+                    <FileText className="h-4 w-4 shrink-0" />
+                    <span className="flex-1 truncate" title={note.title}>
+                      {note.title}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 创建笔记本对话框 */}
       <CreateNotebookDialog
         open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
-        onSubmit={handleCreateNotebook}
+        onOpenChange={(open) => {
+          setCreateDialogOpen(open);
+          if (!open) setCreateParentId(null);
+        }}
+        parentId={createParentId}
+        onSubmit={(name, description, color, icon) =>
+          handleCreateNotebook(name, description, color, icon, createParentId)
+        }
       />
 
       {/* 编辑笔记本对话框 */}
@@ -422,10 +579,16 @@ export function FinderSidebar({
 interface CreateNotebookDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  parentId?: string | null;
   onSubmit: (name: string, description?: string, color?: string, icon?: string) => void;
 }
 
-function CreateNotebookDialog({ open, onOpenChange, onSubmit }: CreateNotebookDialogProps) {
+function CreateNotebookDialog({
+  open,
+  onOpenChange,
+  parentId,
+  onSubmit,
+}: CreateNotebookDialogProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
@@ -451,8 +614,10 @@ function CreateNotebookDialog({ open, onOpenChange, onSubmit }: CreateNotebookDi
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>新建笔记本</DialogTitle>
-          <DialogDescription>创建一个新的笔记本来组织你的笔记</DialogDescription>
+          <DialogTitle>{parentId ? "新建子笔记本" : "新建笔记本"}</DialogTitle>
+          <DialogDescription>
+            {parentId ? "在当前笔记本下创建一个子笔记本" : "创建一个新的笔记本来组织你的笔记"}
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

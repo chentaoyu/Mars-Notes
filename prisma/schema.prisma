@@ -110,23 +110,28 @@ model VerificationToken {
 // 笔记本表
 // ============================================
 model Notebook {
-  id          String   @id @default(cuid())
-  userId      String   @map("user_id")
-  name        String   @db.VarChar(100)
-  description String?  @db.VarChar(500)
-  color       String?  @db.VarChar(20)
-  icon        String?  @db.VarChar(50)
-  sortOrder   Int      @default(0) @map("sort_order")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id          String    @id @default(cuid())
+  userId      String    @map("user_id")
+  parentId    String?   @map("parent_id")
+  name        String    @db.VarChar(100)
+  description String?   @db.VarChar(500)
+  color       String?   @db.VarChar(20)
+  icon        String?   @db.VarChar(50)
+  sortOrder   Int       @default(0) @map("sort_order")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
   // 关系
-  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  notes Note[]
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent   Notebook?  @relation("NotebookHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children Notebook[] @relation("NotebookHierarchy")
+  notes    Note[]
 
   // 索引
   @@index([userId])
   @@index([userId, sortOrder])
+  @@index([parentId])
+  @@index([userId, parentId])
   @@map("notebooks")
 }
 

@@ -12,6 +12,7 @@ export interface User {
 export interface Notebook {
   id: string;
   userId: string;
+  parentId?: string | null;
   name: string;
   description?: string | null;
   color?: string | null;
@@ -19,8 +20,10 @@ export interface Notebook {
   sortOrder: number;
   createdAt: Date;
   updatedAt: Date;
+  children?: Notebook[];
   _count?: {
     notes: number;
+    children?: number;
   };
 }
 
