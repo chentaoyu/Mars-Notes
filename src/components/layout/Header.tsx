@@ -4,15 +4,15 @@ import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { LogOut, User, Settings } from "lucide-react";
+import { VersionBadge } from "./VersionBadge";
 
 export function Header() {
   const { data: session } = useSession();
 
   const handleLogout = async () => {
     // 使用当前页面的 origin 构建完整的 callbackUrl，避免重定向到 localhost
-    const callbackUrl = typeof window !== "undefined" 
-      ? `${window.location.origin}/login`
-      : "/login";
+    const callbackUrl =
+      typeof window !== "undefined" ? `${window.location.origin}/login` : "/login";
     await signOut({ redirect: true, callbackUrl });
   };
 
@@ -47,6 +47,7 @@ export function Header() {
           >
             <LogOut className="h-3 w-3 sm:h-4 sm:w-4" />
           </Button>
+          <VersionBadge />
         </div>
       </div>
     </header>
