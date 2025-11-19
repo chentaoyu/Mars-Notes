@@ -277,7 +277,11 @@ export function ProfilePageClient() {
       resetPassword();
       // 延迟跳转，让用户看到提示
       setTimeout(() => {
-        signOut({ redirect: true, callbackUrl: "/login" });
+        // 使用当前页面的 origin 构建完整的 callbackUrl，避免重定向到 localhost
+        const callbackUrl = typeof window !== "undefined" 
+          ? `${window.location.origin}/login`
+          : "/login";
+        signOut({ redirect: true, callbackUrl });
       }, 2000);
     } catch (error: any) {
       toast({
@@ -310,7 +314,11 @@ export function ProfilePageClient() {
 
       // 跳转到登录页
       setTimeout(() => {
-        signOut({ redirect: true, callbackUrl: "/login" });
+        // 使用当前页面的 origin 构建完整的 callbackUrl，避免重定向到 localhost
+        const callbackUrl = typeof window !== "undefined" 
+          ? `${window.location.origin}/login`
+          : "/login";
+        signOut({ redirect: true, callbackUrl });
       }, 2000);
     } catch (error: any) {
       toast({

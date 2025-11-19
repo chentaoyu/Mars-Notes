@@ -9,7 +9,11 @@ export function Header() {
   const { data: session } = useSession();
 
   const handleLogout = async () => {
-    await signOut({ redirect: true, callbackUrl: "/login" });
+    // 使用当前页面的 origin 构建完整的 callbackUrl，避免重定向到 localhost
+    const callbackUrl = typeof window !== "undefined" 
+      ? `${window.location.origin}/login`
+      : "/login";
+    await signOut({ redirect: true, callbackUrl });
   };
 
   return (
