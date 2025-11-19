@@ -10,12 +10,12 @@ export function Header() {
   const { data: session } = useSession();
 
   const handleLogout = async () => {
-    // 使用当前页面的 origin 构建完整的 callbackUrl，避免重定向到 localhost
-    const callbackUrl =
-      typeof window !== "undefined" ? `${window.location.origin}/login` : "/login";
-    console.log("window.location.origin", window.location.origin);
-    console.log("callbackUrl", callbackUrl);
-    await signOut({ redirect: true, callbackUrl });
+    // 使用相对路径，让 NextAuth 自动使用当前域名
+    // 这样可以避免在生产环境中重定向到 localhost:3000
+    await signOut({
+      redirect: true,
+      callbackUrl: "/login",
+    });
   };
 
   return (
