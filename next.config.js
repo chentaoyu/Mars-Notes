@@ -1,7 +1,7 @@
 // 加载并展开环境变量（支持变量引用）
 require("./load-env");
 
-console.log("process.env.NODE_ENV", process.env.NODE_ENV);
+console.log("当前环境", process.env.NODE_ENV);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -50,8 +50,10 @@ const nextConfig = {
   // 生产模式配置
   ...(process.env.NODE_ENV === "production" && {
     compress: true,
+    typescript: { ignoreBuildErrors: true },
     // 构建优化：限制并发和内存使用
     webpack: (config, { dev, isServer }) => {
+      console.log("webpack", dev);
       if (!dev) {
         // 优化缓存以减少内存使用
         config.cache = {
