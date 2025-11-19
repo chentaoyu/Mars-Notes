@@ -50,6 +50,63 @@ const nextConfig = {
   // 生产模式配置
   ...(process.env.NODE_ENV === "production" && {
     compress: true,
+    // 构建优化：限制并发和内存使用
+    webpack: (config, { dev, isServer }) => {
+      if (!dev) {
+        // 优化缓存以减少内存使用
+        config.cache = {
+          type: "filesystem",
+          buildDependencies: {
+            config: [__filename],
+          },
+        };
+
+        // 减少内存使用的优化
+        config.optimization = {
+          ...config.optimization,
+          // 使用确定性模块 ID，减少内存占用
+          moduleIds: "deterministic",
+          // 简化代码分割，减少内存使用
+          splitChunks: {
+            chunks: "all",
+            maxInitialRequests: 20,
+            minSize: 20000,
+            cacheGroups: {
+              default: false,
+              vendors: false,
+              // 只对较大的包进行分割，减少分割数量
+              vendor: {
+                name: "vendor",
+                chunks: "all",
+                test: /[\\/]node_modules[\\/]/,
+                minChunks: 2,
+                priority: 20,
+                reuseExistingChunk: true,
+                enforce: true,
+              },
+            },
+          },
+        };
+
+        // 限制某些 loader 的内存使用
+        if (config.module && config.module.rules) {
+          config.module.rules.forEach((rule) => {
+            if (rule.use && Array.isArray(rule.use)) {
+              rule.use.forEach((use) => {
+                if (use.loader && use.loader.includes("thread-loader")) {
+                  // 限制 thread-loader 的 worker 数量
+                  use.options = {
+                    ...use.options,
+                    workers: 1,
+                  };
+                }
+              });
+            }
+          });
+        }
+      }
+      return config;
+    },
   }),
 };
 
