@@ -95,23 +95,6 @@ export function NotesPageClient() {
       if (response.ok) {
         const fetchedNotes = result.data || [];
         setNotes(fetchedNotes);
-
-        // 如果当前笔记不在新的列表中，清除当前笔记（但不自动切换到新列表的第一个）
-        setCurrentNoteId((prevId) => {
-          if (prevId && !fetchedNotes.find((n: Note) => n.id === prevId)) {
-            // 当前笔记不在新列表中，清除它
-            setCurrentNote(null);
-            return null;
-          } else if (prevId) {
-            // 如果当前笔记在新列表中，更新笔记对象（可能数据有变化）
-            const note = fetchedNotes.find((n: Note) => n.id === prevId);
-            if (note) {
-              setCurrentNote(note);
-            }
-          }
-          // 保持当前笔记ID不变，不自动切换到新列表的第一个笔记
-          return prevId;
-        });
       }
     } catch (error) {
       console.error("获取笔记列表失败:", error);
@@ -194,6 +177,7 @@ export function NotesPageClient() {
     }
   };
 
+  console.log("currentNote", currentNote);
   return (
     <div className="flex h-full relative">
       {/* 移动端遮罩层 */}
