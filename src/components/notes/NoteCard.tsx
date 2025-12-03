@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import Link from "next/link";
 import { formatRelativeTime, truncate } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { type Note } from "@/types";
@@ -34,8 +33,8 @@ export function NoteCard({ note, onDelete }: NoteCardProps) {
   };
 
   return (
-    <Link href={`/editor/${note.id}`} className="block h-full">
-      <Card className="note-card cursor-pointer group relative h-[240px] sm:h-[280px] flex flex-col">
+    <div className="block h-full">
+      <Card className="note-card group relative h-[240px] sm:h-[280px] flex flex-col">
         <CardHeader className="flex-shrink-0 pb-2 sm:pb-3">
           <div className="flex items-start justify-between gap-2">
             <div className="flex items-center gap-1 sm:gap-2 flex-1 min-w-0">
@@ -98,6 +97,6 @@ export function NoteCard({ note, onDelete }: NoteCardProps) {
           </p>
         </CardContent>
       </Card>
-    </Link>
+    </div>
   );
 }

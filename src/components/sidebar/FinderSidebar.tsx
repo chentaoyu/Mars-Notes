@@ -48,6 +48,7 @@ interface FinderSidebarProps {
   onCreateNote?: () => void;
   onSearchChange?: (search: string) => void;
   onSortChange?: (sortBy: NoteSortBy, sortOrder: NoteSortOrder) => void;
+  onNoteFromAIChat?: (noteId: string) => void;
 }
 
 // macOS 风格的标签颜色
@@ -75,6 +76,7 @@ export function FinderSidebar({
   onCreateNote,
   onSearchChange,
   onSortChange,
+  onNoteFromAIChat,
 }: FinderSidebarProps) {
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
@@ -91,7 +93,7 @@ export function FinderSidebar({
   const [expandedNotebooks, setExpandedNotebooks] = useState<Set<string>>(new Set());
   const [createParentId, setCreateParentId] = useState<string | null>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
-  
+
   // AI Chat 相关状态
   const [chatSessions, setChatSessions] = useState<any[]>([]);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
@@ -619,9 +621,7 @@ export function FinderSidebar({
                     {session.title}
                   </span>
                   {session._count?.messages > 0 && (
-                    <span className="text-xs text-gray-400">
-                      {session._count.messages}
-                    </span>
+                    <span className="text-xs text-gray-400">{session._count.messages}</span>
                   )}
                 </button>
                 <button
@@ -637,9 +637,7 @@ export function FinderSidebar({
               </div>
             ))}
             {chatSessions.length === 0 && (
-              <p className="text-xs text-gray-500 dark:text-gray-400 px-2 py-1">
-                暂无对话
-              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 px-2 py-1">暂无对话</p>
             )}
           </div>
         </div>
@@ -732,6 +730,10 @@ export function FinderSidebar({
                 sessionId={selectedSessionId}
                 onTitleUpdate={(title) => {
                   fetchChatSessions();
+                }}
+                onNoteCreated={(noteId) => {
+                  setShowChatDialog(false);
+                  onNoteFromAIChat?.(noteId);
                 }}
               />
             </div>

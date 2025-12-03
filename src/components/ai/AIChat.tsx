@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Send, Loader2, Bot, User, Brain } from "lucide-react";
+import { Send, Loader2, Bot, User, Brain, FileText } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -20,14 +20,16 @@ interface Message {
 interface AIChatProps {
   sessionId: string;
   onTitleUpdate?: (title: string) => void;
+  onNoteCreated?: (noteId: string) => void;
 }
 
-export function AIChat({ sessionId, onTitleUpdate }: AIChatProps) {
+export function AIChat({ sessionId, onTitleUpdate, onNoteCreated }: AIChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [streamingThinking, setStreamingThinking] = useState<string>("");
+  const [exporting, setExporting] = useState(false);
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -220,6 +222,49 @@ export function AIChat({ sessionId, onTitleUpdate }: AIChatProps) {
     }
   };
 
+  const handleExportToNote = async () => {
+    if (messages.length === 0) {
+      toast({
+        title: "提示",
+        description: "没有可导出的消息",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setExporting(true);
+    try {
+      const response = await fetch(`/api/ai/sessions/${sessionId}/export-note`, {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        throw new Error("导出失败");
+      }
+
+      const result = await response.json();
+
+      toast({
+        title: "成功",
+        description: "对话已成功导出为笔记",
+      });
+
+      // 调用回调函数，在当前页面显示笔记
+      if (onNoteCreated) {
+        onNoteCreated(result.data.id);
+      }
+    } catch (error) {
+      console.error("导出笔记失败:", error);
+      toast({
+        title: "错误",
+        description: "导出笔记失败",
+        variant: "destructive",
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   if (initialLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -230,6 +275,26 @@ export function AIChat({ sessionId, onTitleUpdate }: AIChatProps) {
 
   return (
     <div className="flex flex-col h-full">
+      {/* 顶部工具栏 */}
+      {messages.length > 0 && (
+        <div className="border-b dark:border-gray-700 p-3 flex justify-end">
+          <Button
+            onClick={handleExportToNote}
+            disabled={exporting}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          >
+            {exporting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <FileText className="h-4 w-4" />
+            )}
+            生成笔记
+          </Button>
+        </div>
+      )}
+
       {/* 消息列表 */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 ? (

@@ -192,6 +192,22 @@ export function NotesPageClient() {
     }
   };
 
+  // 处理从AI聊天生成的笔记
+  const handleNoteFromAIChat = async (noteId: string) => {
+    try {
+      // 获取笔记详情
+      const response = await fetch(`/api/notes/${noteId}`);
+      if (response.ok) {
+        const noteData = await response.json();
+        setCurrentNoteId(noteData.id);
+        setCurrentNote(noteData);
+        await fetchNotes(); // 刷新笔记列表
+      }
+    } catch (error) {
+      console.error("获取生成的笔记失败:", error);
+    }
+  };
+
   return (
     <div className="flex h-full relative">
       {/* 侧边栏 */}
@@ -214,6 +230,7 @@ export function NotesPageClient() {
               setSortBy(newSortBy);
               setSortOrder(newSortOrder);
             }}
+            onNoteFromAIChat={handleNoteFromAIChat}
           />
         </div>
       </div>

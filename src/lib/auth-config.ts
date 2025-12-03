@@ -12,7 +12,6 @@ export const authConfig = {
       const isLoggedIn = !!auth?.user;
       const isOnProtectedRoute =
         nextUrl.pathname.startsWith("/notes") ||
-        nextUrl.pathname.startsWith("/editor") ||
         nextUrl.pathname.startsWith("/api/notes") ||
         nextUrl.pathname.startsWith("/api/user");
 
