@@ -93,23 +93,6 @@ export function NotesPageClient() {
       if (response.ok) {
         const fetchedNotes = result.data || [];
         setNotes(fetchedNotes);
-
-        // 如果当前笔记不在新的列表中，清除当前笔记（但不自动切换到新列表的第一个）
-        setCurrentNoteId((prevId) => {
-          if (prevId && !fetchedNotes.find((n: Note) => n.id === prevId)) {
-            // 当前笔记不在新列表中，清除它
-            setCurrentNote(null);
-            return null;
-          } else if (prevId) {
-            // 如果当前笔记在新列表中，更新笔记对象（可能数据有变化）
-            const note = fetchedNotes.find((n: Note) => n.id === prevId);
-            if (note) {
-              setCurrentNote(note);
-            }
-          }
-          // 保持当前笔记ID不变，不自动切换到新列表的第一个笔记
-          return prevId;
-        });
       }
     } catch (error) {
       console.error("获取笔记列表失败:", error);
@@ -170,25 +153,6 @@ export function NotesPageClient() {
         setCurrentNoteId(null);
         setCurrentNote(null);
       }
-    }
-  };
-
-  const handleNoteDelete = async (noteId: string) => {
-    try {
-      const response = await fetch(`/api/notes/${noteId}`, {
-        method: "DELETE",
-      });
-
-      if (response.ok) {
-        // 如果删除的是当前笔记，清除当前笔记
-        if (currentNoteId === noteId) {
-          setCurrentNoteId(null);
-          setCurrentNote(null);
-        }
-        await fetchNotes(); // 刷新笔记列表
-      }
-    } catch (error) {
-      console.error("删除笔记失败:", error);
     }
   };
 
