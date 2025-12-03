@@ -157,9 +157,9 @@ export function TagList({ selectedTagIds = [], onSelectTags }: TagListProps) {
                 style={isSelected && tag.color ? { backgroundColor: tag.color } : {}}
               >
                 # {tag.name}
-                {tag._count && tag._count.noteTags > 0 && (
+                {tag._count && tag._count.notes > 0 && (
                   <span className="ml-1 text-[10px] sm:text-xs opacity-75">
-                    ({tag._count.noteTags})
+                    ({tag._count.notes})
                   </span>
                 )}
               </button>

@@ -36,7 +36,7 @@ export interface Tag {
   createdAt: Date;
   updatedAt: Date;
   _count?: {
-    noteTags: number;
+    notes: number;
   };
 }
 

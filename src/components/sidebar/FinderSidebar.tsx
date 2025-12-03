@@ -94,6 +94,18 @@ export function FinderSidebar({
   const [createParentId, setCreateParentId] = useState<string | null>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
 
+  // 标签相关状态
+  const [hoveredTagId, setHoveredTagId] = useState<string | null>(null);
+  const [createTagDialogOpen, setCreateTagDialogOpen] = useState(false);
+  const [deleteTagDialogOpen, setDeleteTagDialogOpen] = useState(false);
+  const [tagToDelete, setTagToDelete] = useState<string | null>(null);
+  const [isDeletingTag, setIsDeletingTag] = useState(false);
+
+  // AI 聊天会话删除相关状态
+  const [deleteChatDialogOpen, setDeleteChatDialogOpen] = useState(false);
+  const [chatToDelete, setChatToDelete] = useState<string | null>(null);
+  const [isDeletingChat, setIsDeletingChat] = useState(false);
+
   // AI Chat 相关状态
   const [chatSessions, setChatSessions] = useState<any[]>([]);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
@@ -168,23 +180,37 @@ export function FinderSidebar({
     }
   };
 
-  const handleDeleteChatSession = async (sessionId: string) => {
-    if (!confirm("确定要删除这个对话吗？")) return;
+  const handleDeleteChatSession = (sessionId: string) => {
+    setChatToDelete(sessionId);
+    setDeleteChatDialogOpen(true);
+  };
+
+  const confirmDeleteChat = async () => {
+    if (!chatToDelete) return;
 
     try {
-      const response = await fetch(`/api/ai/sessions/${sessionId}`, {
+      setIsDeletingChat(true);
+      const response = await fetch(`/api/ai/sessions/${chatToDelete}`, {
         method: "DELETE",
       });
 
       if (response.ok) {
-        fetchChatSessions();
-        if (selectedSessionId === sessionId) {
+        await fetchChatSessions();
+        if (selectedSessionId === chatToDelete) {
           setSelectedSessionId(null);
           setShowChatDialog(false);
         }
+        setDeleteChatDialogOpen(false);
+        setChatToDelete(null);
+      } else {
+        const error = await response.json();
+        alert(error.error || "删除对话失败");
       }
     } catch (error) {
       console.error("删除聊天会话失败:", error);
+      alert("删除聊天会话失败");
+    } finally {
+      setIsDeletingChat(false);
     }
   };
 
@@ -306,6 +332,61 @@ export function FinderSidebar({
       onSelectTags(selectedTagIds.filter((id) => id !== tagId));
     } else {
       onSelectTags([...selectedTagIds, tagId]);
+    }
+  };
+
+  const handleCreateTag = async (name: string, color?: string) => {
+    try {
+      const response = await fetch("/api/tags", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, color }),
+      });
+
+      if (response.ok) {
+        await fetchData();
+        setCreateTagDialogOpen(false);
+      } else {
+        const error = await response.json();
+        alert(error.error || "创建标签失败");
+      }
+    } catch (error) {
+      console.error("创建标签失败:", error);
+      alert("创建标签失败");
+    }
+  };
+
+  const handleDeleteTag = (tagId: string) => {
+    setTagToDelete(tagId);
+    setDeleteTagDialogOpen(true);
+  };
+
+  const confirmDeleteTag = async () => {
+    if (!tagToDelete) return;
+
+    try {
+      setIsDeletingTag(true);
+      const response = await fetch(`/api/tags/${tagToDelete}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        await fetchData();
+        // 如果删除的标签在选中列表中，移除它
+        if (selectedTagIds.includes(tagToDelete)) {
+          onSelectTags(selectedTagIds.filter((id) => id !== tagToDelete));
+        }
+        setDeleteTagDialogOpen(false);
+        setTagToDelete(null);
+      } else {
+        const error = await response.json();
+        alert(error.error || "删除标签失败");
+      }
+    } catch (error) {
+      console.error("删除标签失败:", error);
+      alert("删除标签失败");
+    } finally {
+      setIsDeletingTag(false);
     }
   };
 
@@ -530,21 +611,33 @@ export function FinderSidebar({
             <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-2">
               标签
             </h3>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 w-6 p-0 hover:bg-gray-200 dark:hover:bg-gray-800"
+              onClick={() => setCreateTagDialogOpen(true)}
+              title="新建标签"
+            >
+              <Plus className="h-3.5 w-3.5" />
+            </Button>
           </div>
 
           <div className="space-y-1">
             {tags.map((tag) => {
               const isSelected = selectedTagIds.includes(tag.id);
+              const isHovered = hoveredTagId === tag.id;
               return (
-                <button
+                <div
                   key={tag.id}
-                  onClick={() => handleToggleTag(tag.id)}
                   className={cn(
-                    "w-full text-left px-2 py-1.5 rounded-md text-sm transition-colors flex items-center gap-2",
+                    "group relative px-2 py-1.5 rounded-md text-sm transition-colors flex items-center gap-2",
                     isSelected
                       ? "bg-blue-100 text-blue-900 dark:bg-blue-900/30 dark:text-blue-300"
                       : "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
                   )}
+                  onMouseEnter={() => setHoveredTagId(tag.id)}
+                  onMouseLeave={() => setHoveredTagId(null)}
+                  onClick={() => handleToggleTag(tag.id)}
                 >
                   <TagIcon className="h-4 w-4 shrink-0" />
                   <span className="flex-1 truncate">#{tag.name}</span>
@@ -554,7 +647,24 @@ export function FinderSidebar({
                       style={{ backgroundColor: tag.color }}
                     />
                   )}
-                </button>
+                  {tag._count && tag._count.notes > 0 && (
+                    <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">
+                      {tag._count.notes}
+                    </span>
+                  )}
+                  {isHovered && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteTag(tag.id);
+                      }}
+                      className="p-0.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-red-600 dark:text-red-400 shrink-0"
+                      title="删除"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
               );
             })}
             {tags.length === 0 && (
@@ -708,7 +818,7 @@ export function FinderSidebar({
         />
       )}
 
-      {/* 删除确认对话框 */}
+      {/* 删除确认对话框 - 笔记本 */}
       <DeleteConfirmDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
@@ -716,6 +826,33 @@ export function FinderSidebar({
         isDeleting={isDeleting}
         title="确认删除笔记本"
         description="确定要删除这个笔记本吗？笔记本中还有笔记时将无法删除。"
+      />
+
+      {/* 创建标签对话框 */}
+      <CreateTagDialog
+        open={createTagDialogOpen}
+        onOpenChange={setCreateTagDialogOpen}
+        onSubmit={handleCreateTag}
+      />
+
+      {/* 删除确认对话框 - 标签 */}
+      <DeleteConfirmDialog
+        open={deleteTagDialogOpen}
+        onOpenChange={setDeleteTagDialogOpen}
+        onConfirm={confirmDeleteTag}
+        isDeleting={isDeletingTag}
+        title="确认删除标签"
+        description="确定要删除这个标签吗？此操作无法撤销。"
+      />
+
+      {/* 删除确认对话框 - AI 对话 */}
+      <DeleteConfirmDialog
+        open={deleteChatDialogOpen}
+        onOpenChange={setDeleteChatDialogOpen}
+        onConfirm={confirmDeleteChat}
+        isDeleting={isDeletingChat}
+        title="确认删除对话"
+        description="确定要删除这个对话吗？对话中的所有消息都将被删除，此操作无法撤销。"
       />
 
       {/* AI Chat 对话框 */}
@@ -986,6 +1123,79 @@ function EditNotebookDialog({ open, onOpenChange, notebook, onSubmit }: EditNote
               取消
             </Button>
             <Button type="submit">保存</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// 创建标签对话框
+interface CreateTagDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (name: string, color?: string) => void;
+}
+
+function CreateTagDialog({ open, onOpenChange, onSubmit }: CreateTagDialogProps) {
+  const [name, setName] = useState("");
+  const [selectedColor, setSelectedColor] = useState<string | null>(TAG_COLORS[0].value);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (name.trim()) {
+      onSubmit(name.trim(), selectedColor || undefined);
+      setName("");
+      setSelectedColor(TAG_COLORS[0].value);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>新建标签</DialogTitle>
+          <DialogDescription>创建一个新的标签来分类你的笔记</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="text-sm font-medium mb-1 block">名称</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="标签名称"
+              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
+              autoFocus
+              maxLength={50}
+              required
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium mb-2 block">颜色</label>
+            <div className="flex gap-2 flex-wrap">
+              {TAG_COLORS.map((color) => (
+                <button
+                  key={color.value}
+                  type="button"
+                  onClick={() => setSelectedColor(color.value)}
+                  className={cn(
+                    "w-8 h-8 rounded-full border-2 transition-all",
+                    selectedColor === color.value
+                      ? "border-gray-900 dark:border-gray-100 scale-110"
+                      : "border-gray-300 dark:border-gray-600 hover:scale-105"
+                  )}
+                  style={{ backgroundColor: color.value }}
+                  title={color.name}
+                />
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              取消
+            </Button>
+            <Button type="submit">创建</Button>
           </DialogFooter>
         </form>
       </DialogContent>

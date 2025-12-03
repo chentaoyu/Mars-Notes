@@ -278,9 +278,8 @@ export function ProfilePageClient() {
       // 延迟跳转，让用户看到提示
       setTimeout(() => {
         // 使用当前页面的 origin 构建完整的 callbackUrl，避免重定向到 localhost
-        const callbackUrl = typeof window !== "undefined" 
-          ? `${window.location.origin}/login`
-          : "/login";
+        const callbackUrl =
+          typeof window !== "undefined" ? `${window.location.origin}/login` : "/login";
         signOut({ redirect: true, callbackUrl });
       }, 2000);
     } catch (error: any) {
@@ -315,9 +314,8 @@ export function ProfilePageClient() {
       // 跳转到登录页
       setTimeout(() => {
         // 使用当前页面的 origin 构建完整的 callbackUrl，避免重定向到 localhost
-        const callbackUrl = typeof window !== "undefined" 
-          ? `${window.location.origin}/login`
-          : "/login";
+        const callbackUrl =
+          typeof window !== "undefined" ? `${window.location.origin}/login` : "/login";
         signOut({ redirect: true, callbackUrl });
       }, 2000);
     } catch (error: any) {
@@ -544,15 +542,17 @@ export function ProfilePageClient() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>确认注销账户</DialogTitle>
-            <DialogDescription>
-              此操作将永久删除您的账户和所有数据，包括：
-              <ul className="list-disc list-inside mt-2 space-y-1">
-                <li>所有笔记</li>
-                <li>所有笔记本</li>
-                <li>所有标签</li>
-                <li>个人设置</li>
-              </ul>
-              <p className="mt-2 font-semibold text-destructive">此操作无法撤销！</p>
+            <DialogDescription asChild>
+              <div>
+                <p>此操作将永久删除您的账户和所有数据，包括：</p>
+                <ul className="list-disc list-inside mt-2 space-y-1">
+                  <li>所有笔记</li>
+                  <li>所有笔记本</li>
+                  <li>所有标签</li>
+                  <li>个人设置</li>
+                </ul>
+                <p className="mt-2 font-semibold text-destructive">此操作无法撤销！</p>
+              </div>
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmitDelete(onSubmitDelete)}>
