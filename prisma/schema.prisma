@@ -3,6 +3,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
 }
 
 datasource db {
@@ -24,11 +25,15 @@ model User {
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
   // 关系
-  notes     Note[]
-  notebooks Notebook[]
-  tags      Tag[]
-  accounts  Account[]
-  sessions  Session[]
+  notes          Note[]
+  notebooks      Notebook[]
+  tags           Tag[]
+  accounts       Account[]
+  sessions       Session[]
+  aiConfig       AIConfig?
+  chatSessions   ChatSession[]
+  chatMessages   ChatMessage[]
+  tokenUsages    TokenUsage[]
 
   @@map("users")
 }
@@ -174,5 +179,86 @@ model NoteTag {
   @@index([noteId])
   @@index([tagId])
   @@map("note_tags")
+}
+
+// ============================================
+// AI 配置表
+// ============================================
+model AIConfig {
+  id        String   @id @default(cuid())
+  userId    String   @unique @map("user_id")
+  provider  String   @default("deepseek") @db.VarChar(50) // 提供商：deepseek, openai 等
+  apiKey    String   @map("api_key") @db.VarChar(500) // 加密存储的 API Key
+  model     String   @default("deepseek-chat") @db.VarChar(100) // 模型名称
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // 关系
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("ai_configs")
+}
+
+// ============================================
+// 聊天会话表
+// ============================================
+model ChatSession {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  title     String   @default("新对话") @db.VarChar(200)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // 关系
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages ChatMessage[]
+
+  @@index([userId])
+  @@index([userId, updatedAt(sort: Desc)])
+  @@map("chat_sessions")
+}
+
+// ============================================
+// 聊天消息表
+// ============================================
+model ChatMessage {
+  id        String   @id @default(cuid())
+  sessionId String   @map("session_id")
+  userId    String   @map("user_id")
+  role      String   @db.VarChar(20) // user, assistant, system
+  content   String   @db.Text
+  model     String?  @db.VarChar(100) // 使用的模型
+  tokens    Int?     // 消息的 token 数量
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // 关系
+  session ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([userId])
+  @@index([sessionId, createdAt])
+  @@map("chat_messages")
+}
+
+// ============================================
+// Token 使用统计表
+// ============================================
+model TokenUsage {
+  id             String   @id @default(cuid())
+  userId         String   @map("user_id")
+  model          String   @db.VarChar(100) // 模型名称
+  promptTokens   Int      @default(0) @map("prompt_tokens") // 输入 tokens
+  completionTokens Int    @default(0) @map("completion_tokens") // 输出 tokens
+  totalTokens    Int      @default(0) @map("total_tokens") // 总 tokens
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // 关系
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, createdAt])
+  @@map("token_usages")
 }
 

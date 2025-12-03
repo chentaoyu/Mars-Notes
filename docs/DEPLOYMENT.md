@@ -808,16 +808,33 @@ sudo systemctl reload nginx
 
 #### **SSL 证书（Let's Encrypt）**
 
+**方法一：使用自动化脚本（推荐）**
+
+```bash
+# 进入项目目录
+cd /var/www/note-book
+
+# 编辑脚本，修改邮箱地址
+nano scripts/setup-ssl.sh
+
+# 运行脚本（需要 root 权限）
+sudo ./scripts/setup-ssl.sh
+```
+
+**方法二：手动配置**
+
 ```bash
 # 安装 Certbot
 sudo apt install -y certbot python3-certbot-nginx
 
 # 获取证书
-sudo certbot --nginx -d note.yourdomain.com
+sudo certbot --nginx -d taomat.cc -d www.taomat.cc
 
-# 自动续期
+# 测试自动续期
 sudo certbot renew --dry-run
 ```
+
+**详细说明请参考**：[SSL 配置指南](./SSL_SETUP.md)
 
 ---
 

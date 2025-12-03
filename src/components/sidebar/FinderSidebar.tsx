@@ -23,10 +23,16 @@ import {
   ChevronDown,
   Search,
   FileText,
+  MessageSquare,
+  Settings,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NoteSortBy, NoteSortOrder } from "@/types";
 import { SortSelector } from "@/components/notes/SortSelector";
+import { AIChat } from "@/components/ai/AIChat";
+import { AISettings } from "@/components/ai/AISettings";
+import { TokenStats } from "@/components/ai/TokenStats";
 
 interface FinderSidebarProps {
   selectedNotebookId?: string | null;
@@ -85,9 +91,17 @@ export function FinderSidebar({
   const [expandedNotebooks, setExpandedNotebooks] = useState<Set<string>>(new Set());
   const [createParentId, setCreateParentId] = useState<string | null>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
+  
+  // AI Chat 相关状态
+  const [chatSessions, setChatSessions] = useState<any[]>([]);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [showChatDialog, setShowChatDialog] = useState(false);
+  const [showSettingsDialog, setShowSettingsDialog] = useState(false);
+  const [showStatsDialog, setShowStatsDialog] = useState(false);
 
   useEffect(() => {
     fetchData();
+    fetchChatSessions();
   }, []);
 
   useEffect(() => {
@@ -118,6 +132,57 @@ export function FinderSidebar({
       console.error("获取数据失败:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchChatSessions = async () => {
+    try {
+      const response = await fetch("/api/ai/sessions");
+      if (response.ok) {
+        const result = await response.json();
+        setChatSessions(result.data || []);
+      }
+    } catch (error) {
+      console.error("获取聊天会话失败:", error);
+    }
+  };
+
+  const handleCreateChatSession = async () => {
+    try {
+      const response = await fetch("/api/ai/sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: "新对话" }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setSelectedSessionId(result.data.id);
+        setShowChatDialog(true);
+        fetchChatSessions();
+      }
+    } catch (error) {
+      console.error("创建聊天会话失败:", error);
+    }
+  };
+
+  const handleDeleteChatSession = async (sessionId: string) => {
+    if (!confirm("确定要删除这个对话吗？")) return;
+
+    try {
+      const response = await fetch(`/api/ai/sessions/${sessionId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        fetchChatSessions();
+        if (selectedSessionId === sessionId) {
+          setSelectedSessionId(null);
+          setShowChatDialog(false);
+        }
+      }
+    } catch (error) {
+      console.error("删除聊天会话失败:", error);
     }
   };
 
@@ -499,6 +564,89 @@ export function FinderSidebar({
         {/* 分隔线 */}
         <div className="border-t border-gray-200 dark:border-gray-800 my-2" />
 
+        {/* AI Chat 部分 */}
+        <div className="p-3">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-2">
+              AI 助手
+            </h3>
+            <div className="flex gap-1">
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 w-6 p-0 hover:bg-gray-200 dark:hover:bg-gray-800"
+                onClick={() => setShowStatsDialog(true)}
+                title="Token 统计"
+              >
+                <BarChart3 className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 w-6 p-0 hover:bg-gray-200 dark:hover:bg-gray-800"
+                onClick={() => setShowSettingsDialog(true)}
+                title="AI 设置"
+              >
+                <Settings className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 w-6 p-0 hover:bg-gray-200 dark:hover:bg-gray-800"
+                onClick={handleCreateChatSession}
+                title="新建对话"
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            {chatSessions.slice(0, 5).map((session) => (
+              <div
+                key={session.id}
+                className="group relative px-2 py-1.5 rounded-md text-sm transition-colors flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                <button
+                  onClick={() => {
+                    setSelectedSessionId(session.id);
+                    setShowChatDialog(true);
+                  }}
+                  className="flex-1 flex items-center gap-2 text-left"
+                >
+                  <MessageSquare className="h-4 w-4 shrink-0 text-gray-500" />
+                  <span className="flex-1 truncate text-gray-700 dark:text-gray-300">
+                    {session.title}
+                  </span>
+                  {session._count?.messages > 0 && (
+                    <span className="text-xs text-gray-400">
+                      {session._count.messages}
+                    </span>
+                  )}
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteChatSession(session.id);
+                  }}
+                  className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-red-600 dark:text-red-400"
+                  title="删除"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+            {chatSessions.length === 0 && (
+              <p className="text-xs text-gray-500 dark:text-gray-400 px-2 py-1">
+                暂无对话
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* 分隔线 */}
+        <div className="border-t border-gray-200 dark:border-gray-800 my-2" />
+
         {/* 笔记列表部分 */}
         {notes.length > 0 && (
           <div className="p-3">
@@ -571,6 +719,39 @@ export function FinderSidebar({
         title="确认删除笔记本"
         description="确定要删除这个笔记本吗？笔记本中还有笔记时将无法删除。"
       />
+
+      {/* AI Chat 对话框 */}
+      {selectedSessionId && (
+        <Dialog open={showChatDialog} onOpenChange={setShowChatDialog}>
+          <DialogContent className="max-w-3xl h-[600px] flex flex-col p-0">
+            <DialogHeader className="px-6 py-4 border-b dark:border-gray-700">
+              <DialogTitle>AI 助手</DialogTitle>
+            </DialogHeader>
+            <div className="flex-1 overflow-hidden">
+              <AIChat
+                sessionId={selectedSessionId}
+                onTitleUpdate={(title) => {
+                  fetchChatSessions();
+                }}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* AI 设置对话框 */}
+      <Dialog open={showSettingsDialog} onOpenChange={setShowSettingsDialog}>
+        <DialogContent className="max-w-md">
+          <AISettings />
+        </DialogContent>
+      </Dialog>
+
+      {/* Token 统计对话框 */}
+      <Dialog open={showStatsDialog} onOpenChange={setShowStatsDialog}>
+        <DialogContent className="max-w-2xl">
+          <TokenStats />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

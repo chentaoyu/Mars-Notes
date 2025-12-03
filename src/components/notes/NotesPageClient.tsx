@@ -6,7 +6,6 @@ import { FinderSidebar } from "@/components/sidebar/FinderSidebar";
 import { MarkdownEditor } from "@/components/editor/MarkdownEditor";
 import { Button } from "@/components/ui/button";
 import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
-import { Menu, X } from "lucide-react";
 
 export function NotesPageClient() {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -16,7 +15,6 @@ export function NotesPageClient() {
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<NoteSortBy>("updatedAt");
   const [sortOrder, setSortOrder] = useState<NoteSortOrder>("desc");
-  const [showSidebar, setShowSidebar] = useState(true);
   const [currentNoteId, setCurrentNoteId] = useState<string | null>(null);
   const [currentNote, setCurrentNote] = useState<Note | null>(null);
   const [hasCheckedFirstNote, setHasCheckedFirstNote] = useState(false);
@@ -95,6 +93,23 @@ export function NotesPageClient() {
       if (response.ok) {
         const fetchedNotes = result.data || [];
         setNotes(fetchedNotes);
+
+        // 如果当前笔记不在新的列表中，清除当前笔记（但不自动切换到新列表的第一个）
+        setCurrentNoteId((prevId) => {
+          if (prevId && !fetchedNotes.find((n: Note) => n.id === prevId)) {
+            // 当前笔记不在新列表中，清除它
+            setCurrentNote(null);
+            return null;
+          } else if (prevId) {
+            // 如果当前笔记在新列表中，更新笔记对象（可能数据有变化）
+            const note = fetchedNotes.find((n: Note) => n.id === prevId);
+            if (note) {
+              setCurrentNote(note);
+            }
+          }
+          // 保持当前笔记ID不变，不自动切换到新列表的第一个笔记
+          return prevId;
+        });
       }
     } catch (error) {
       console.error("获取笔记列表失败:", error);
@@ -177,38 +192,10 @@ export function NotesPageClient() {
     }
   };
 
-  console.log("currentNote", currentNote);
   return (
     <div className="flex h-full relative">
-      {/* 移动端遮罩层 */}
-      {showSidebar && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={() => setShowSidebar(false)}
-        />
-      )}
-
       {/* 侧边栏 */}
-      <div
-        className={`
-          fixed lg:relative inset-y-0 left-0 z-50
-          w-64 flex flex-col h-full
-          transform transition-all duration-300 ease-in-out
-          ${showSidebar ? "translate-x-0" : "-translate-x-full"}
-          ${showSidebar ? "lg:w-64" : "lg:w-0 lg:border-0 lg:overflow-hidden"}
-          ${!showSidebar ? "lg:pointer-events-none" : ""}
-        `}
-      >
-        {/* 移动端关闭按钮 */}
-        <div className="lg:hidden flex justify-end p-4 pb-0">
-          <button
-            onClick={() => setShowSidebar(false)}
-            className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
-          >
-            <X className="h-6 w-6" />
-          </button>
-        </div>
-
+      <div className="w-64 flex flex-col h-full">
         <div className="flex-1 overflow-y-auto">
           <FinderSidebar
             selectedNotebookId={selectedNotebookId}
@@ -218,27 +205,9 @@ export function NotesPageClient() {
             sortOrder={sortOrder}
             notes={notes}
             currentNoteId={currentNoteId}
-            onSelectNotebook={(id) => {
-              setSelectedNotebookId(id);
-              // 移动端选择后自动关闭侧边栏
-              if (window.innerWidth < 1024) {
-                setShowSidebar(false);
-              }
-            }}
-            onSelectTags={(ids) => {
-              setSelectedTagIds(ids);
-              // 移动端选择后自动关闭侧边栏
-              if (window.innerWidth < 1024) {
-                setShowSidebar(false);
-              }
-            }}
-            onSelectNote={(noteId) => {
-              handleNoteSelect(noteId);
-              // 移动端选择后自动关闭侧边栏
-              if (window.innerWidth < 1024) {
-                setShowSidebar(false);
-              }
-            }}
+            onSelectNotebook={setSelectedNotebookId}
+            onSelectTags={setSelectedTagIds}
+            onSelectNote={handleNoteSelect}
             onCreateNote={handleCreateNote}
             onSearchChange={setSearch}
             onSortChange={(newSortBy, newSortOrder) => {

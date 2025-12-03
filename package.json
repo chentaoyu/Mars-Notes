@@ -30,6 +30,7 @@
     "db:reset": "prisma migrate reset"
   },
   "dependencies": {
+    "@ant-design/x": "^1.2.0",
     "@auth/prisma-adapter": "^1.5.0",
     "@hookform/resolvers": "^3.3.4",
     "@prisma/client": "^6.18.0",
@@ -42,6 +43,7 @@
     "@radix-ui/react-switch": "^1.2.6",
     "@radix-ui/react-toast": "^1.2.15",
     "@radix-ui/react-tooltip": "^1.2.8",
+    "antd": "^5.23.3",
     "bcrypt": "^5.1.1",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
