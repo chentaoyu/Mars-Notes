@@ -31,6 +31,8 @@ export function VditorEditor({ content, onContentChange }: VditorEditorProps) {
       height: "100%",
       cdn: "/vendor/vditor",
       mode: "sv", // 分屏预览模式
+      tab: "\t",
+      customWysiwygToolbar: () => {},
       preview: {
         delay: 300,
         hljs: {

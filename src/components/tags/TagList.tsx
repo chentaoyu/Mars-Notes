@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Tag } from '@/types';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { DeleteConfirmDialog } from '@/components/common/DeleteConfirmDialog';
+import { useState, useEffect } from "react";
+import { Tag } from "@/types";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
 
 interface TagListProps {
   selectedTagIds?: string[];
@@ -26,13 +26,13 @@ export function TagList({ selectedTagIds = [], onSelectTags }: TagListProps) {
   const fetchTags = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/tags');
+      const response = await fetch("/api/tags");
       const result = await response.json();
       if (response.ok) {
         setTags(result.data || []);
       }
     } catch (error) {
-      console.error('获取标签列表失败:', error);
+      console.error("获取标签列表失败:", error);
     } finally {
       setLoading(false);
     }
@@ -40,9 +40,9 @@ export function TagList({ selectedTagIds = [], onSelectTags }: TagListProps) {
 
   const handleCreateTag = async (name: string) => {
     try {
-      const response = await fetch('/api/tags', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/tags", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, color: getRandomColor() }),
       });
 
@@ -52,11 +52,11 @@ export function TagList({ selectedTagIds = [], onSelectTags }: TagListProps) {
         setShowCreateForm(false);
       } else {
         const error = await response.json();
-        alert(error.error || '创建标签失败');
+        alert(error.error || "创建标签失败");
       }
     } catch (error) {
-      console.error('创建标签失败:', error);
-      alert('创建标签失败');
+      console.error("创建标签失败:", error);
+      alert("创建标签失败");
     }
   };
 
@@ -71,7 +71,7 @@ export function TagList({ selectedTagIds = [], onSelectTags }: TagListProps) {
     try {
       setIsDeleting(true);
       const response = await fetch(`/api/tags/${tagToDelete}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
 
       if (response.ok) {
@@ -81,11 +81,11 @@ export function TagList({ selectedTagIds = [], onSelectTags }: TagListProps) {
         setTagToDelete(null);
       } else {
         const error = await response.json();
-        alert(error.error || '删除标签失败');
+        alert(error.error || "删除标签失败");
       }
     } catch (error) {
-      console.error('删除标签失败:', error);
-      alert('删除标签失败');
+      console.error("删除标签失败:", error);
+      alert("删除标签失败");
     } finally {
       setIsDeleting(false);
     }
@@ -101,13 +101,13 @@ export function TagList({ selectedTagIds = [], onSelectTags }: TagListProps) {
 
   const getRandomColor = () => {
     const colors = [
-      '#ef4444', // red
-      '#f59e0b', // amber
-      '#10b981', // emerald
-      '#3b82f6', // blue
-      '#8b5cf6', // violet
-      '#ec4899', // pink
-      '#06b6d4', // cyan
+      "#ef4444", // red
+      "#f59e0b", // amber
+      "#10b981", // emerald
+      "#3b82f6", // blue
+      "#8b5cf6", // violet
+      "#ec4899", // pink
+      "#06b6d4", // cyan
     ];
     return colors[Math.floor(Math.random() * colors.length)];
   };
@@ -125,15 +125,12 @@ export function TagList({ selectedTagIds = [], onSelectTags }: TagListProps) {
           onClick={() => setShowCreateForm(!showCreateForm)}
           className="text-xs h-7 sm:h-8"
         >
-          {showCreateForm ? '取消' : '新建'}
+          {showCreateForm ? "取消" : "新建"}
         </Button>
       </div>
 
       {showCreateForm && (
-        <CreateTagForm
-          onSubmit={handleCreateTag}
-          onCancel={() => setShowCreateForm(false)}
-        />
+        <CreateTagForm onSubmit={handleCreateTag} onCancel={() => setShowCreateForm(false)} />
       )}
 
       {selectedTagIds.length > 0 && (
@@ -149,22 +146,15 @@ export function TagList({ selectedTagIds = [], onSelectTags }: TagListProps) {
         {tags.map((tag) => {
           const isSelected = selectedTagIds.includes(tag.id);
           return (
-            <div
-              key={tag.id}
-              className="group relative inline-flex items-center"
-            >
+            <div key={tag.id} className="group relative inline-flex items-center">
               <button
                 onClick={() => handleToggleTag(tag.id)}
                 className={`px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-medium transition-all ${
                   isSelected
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
                 }`}
-                style={
-                  isSelected && tag.color
-                    ? { backgroundColor: tag.color }
-                    : {}
-                }
+                style={isSelected && tag.color ? { backgroundColor: tag.color } : {}}
               >
                 # {tag.name}
                 {tag._count && tag._count.noteTags > 0 && (
@@ -188,7 +178,9 @@ export function TagList({ selectedTagIds = [], onSelectTags }: TagListProps) {
         })}
 
         {tags.length === 0 && (
-          <p className="text-gray-500 text-xs sm:text-sm">暂无标签，点击"新建"创建第一个标签</p>
+          <p className="text-gray-500 text-xs sm:text-sm">
+            暂无标签，点击&quot;新建&quot;创建第一个标签
+          </p>
         )}
       </div>
 
@@ -211,13 +203,13 @@ interface CreateTagFormProps {
 }
 
 function CreateTagForm({ onSubmit, onCancel }: CreateTagFormProps) {
-  const [name, setName] = useState('');
+  const [name, setName] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim()) {
       onSubmit(name.trim());
-      setName('');
+      setName("");
     }
   };
 
@@ -252,4 +244,3 @@ function CreateTagForm({ onSubmit, onCancel }: CreateTagFormProps) {
     </Card>
   );
 }
-
